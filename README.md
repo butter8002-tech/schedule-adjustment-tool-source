@@ -27,6 +27,7 @@
 │   └── config.toml               # Streamlit共通設定
 ├── docs/
 │   ├── USAGE_GUIDE.md            # v2.0.0利用者ガイド
+│   ├── schedule_adjustment_tool_technical_overview.md # 一般的な技術概要
 │   └── user_guide_assets/        # ガイドで使用する画面画像
 └── src/
     └── schedule_adjustment_tool/

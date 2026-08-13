@@ -1,19 +1,40 @@
-# Ignore everything by default. Only the public-source allowlist below is tracked.
+# Default-deny policy: only the public-source allowlist below is tracked.
+# Local secrets, runtime data, tests, and development artifacts remain ignored
+# unless they are deliberately added to the allowlist.
 *
 
-# Repository files
+# Git metadata and public entry points
 !.gitignore
 !README.md
 !app.py
 !requirements.txt
 
-# Streamlit configuration
+# Local secrets and runtime data
+.env
+.env.*
+.streamlit/secrets.toml
+*.db
+*.sqlite
+*.sqlite3
+*.log
+*.key
+*.pem
+*.token
+.venv/
+venv/
+__pycache__/
+.pytest_cache/
+.mypy_cache/
+.DS_Store
+
+# Public Streamlit configuration
 !.streamlit/
 !.streamlit/config.toml
 
-# v2 user guide
+# Public documents
 !docs/
 !docs/USAGE_GUIDE.md
+!docs/schedule_adjustment_tool_technical_overview.md
 !docs/user_guide_assets/
 !docs/user_guide_assets/*.png
 
