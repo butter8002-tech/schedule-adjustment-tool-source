@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      :root {
+        color-scheme: light;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        --border: rgba(49, 51, 63, 0.22);
+        --background: #ffffff;
+        --text: #31333f;
+        --muted: #667085;
+        --primary: #175cd3;
+        --primary-text: #ffffff;
+        --disabled-background: #f2f4f7;
+        --disabled-border: #d0d5dd;
+        --disabled-text: #98a2b3;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        color: var(--text);
+        background: transparent;
+        font-size: 14px;
+      }
+      .confirmation {
+        display: grid;
+        gap: 8px;
+      }
+      label {
+        display: grid;
+        gap: 5px;
+        font-size: 14px;
+      }
+      input {
+        width: 100%;
+        min-height: 38px;
+        padding: 7px 10px;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        color: var(--text);
+        background: var(--background);
+        font: inherit;
+      }
+      input:focus-visible,
+      button:focus-visible {
+        outline: 3px solid rgba(23, 92, 211, 0.24);
+        outline-offset: 1px;
+      }
+      .status {
+        min-height: 19px;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.45;
+      }
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: flex-start;
+        gap: 8px;
+      }
+      .actions button {
+        flex: 0 0 auto;
+        width: auto;
+        white-space: nowrap;
+      }
+      button {
+        min-height: 38px;
+        padding: 7px 10px;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        color: var(--text);
+        background: var(--background);
+        font: inherit;
+        font-size: 14px;
+        font-weight: 650;
+        cursor: pointer;
+      }
+      button.primary {
+        border-color: var(--primary);
+        color: var(--primary-text);
+        background: var(--primary);
+      }
+      button:hover:not(:disabled) {
+        filter: brightness(0.96);
+      }
+      button:disabled {
+        cursor: not-allowed;
+        opacity: 0.45;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root">
+      <div class="confirmation">
+        <label for="participant-name-confirmation">
+          <span id="confirmation-label">確認のため参加者名を入力してください</span>
+          <input
+            id="participant-name-confirmation"
+            type="text"
+            autocomplete="off"
+            spellcheck="false"
+          />
+        </label>
+        <div id="confirmation-status" class="status" aria-live="polite"></div>
+        <div class="actions">
+          <button id="save-button" class="primary" type="button" disabled>
+            表示内容で保存を実行
+          </button>
+          <button id="back-button" type="button">戻って確認</button>
+        </div>
+      </div>
+    </div>
+    <script>
+      let componentArgs = {};
+      let activeStateId = "";
+      let initialized = false;
+      let actionSequence = 0;
+
+      const confirmationInput = document.getElementById(
+        "participant-name-confirmation",
+      );
+      const confirmationLabel = document.getElementById("confirmation-label");
+      const confirmationStatus = document.getElementById("confirmation-status");
+      const saveButton = document.getElementById("save-button");
+      const backButton = document.getElementById("back-button");
+
+      function sendMessage(type, data) {
+        window.parent.postMessage(
+          { isStreamlitMessage: true, type, ...data },
+          "*",
+        );
+      }
+
+      function setComponentReady() {
+        sendMessage("streamlit:componentReady", { apiVersion: 1 });
+      }
+
+      function setComponentValue(value) {
+        sendMessage("streamlit:setComponentValue", {
+          value,
+          dataType: "json",
+        });
+      }
+
+      function setFrameHeight() {
+        const root = document.getElementById("root");
+        const height = Math.max(
+          1,
+          Math.ceil(root ? root.getBoundingClientRect().height : 0),
+        );
+        sendMessage("streamlit:setFrameHeight", { height });
+      }
+
+      function normalized(value) {
+        return String(value == null ? "" : value).trim();
+      }
+
+      function confirmationMatches() {
+        const participantName = normalized(componentArgs.participant_name);
+        return (
+          Boolean(componentArgs.has_updates) &&
+          Boolean(participantName) &&
+          normalized(confirmationInput.value) === participantName
+        );
+      }
+
+      function updateControls() {
+        const matched = confirmationMatches();
+        saveButton.disabled = !matched;
+        if (!componentArgs.participant_name) {
+          confirmationStatus.textContent =
+            "提出対象の参加者を一意に確認できないため、保存できません。";
+        } else if (!componentArgs.has_updates) {
+          confirmationStatus.textContent =
+            "保存対象の企画がありません。戻って今回の扱いを選び直してください。";
+        } else if (matched) {
+          confirmationStatus.textContent = "参加者名が一致しました。保存できます。";
+        } else {
+          confirmationStatus.textContent =
+            "参加者名が一致するまで保存ボタンは無効です。";
+        }
+      }
+
+      function applyRenderArgs(nextArgs) {
+        componentArgs = nextArgs || {};
+        const nextStateId = String(componentArgs.state_id || "");
+        if (!initialized || activeStateId !== nextStateId) {
+          confirmationInput.value = String(componentArgs.initial_value || "");
+          activeStateId = nextStateId;
+          initialized = true;
+        }
+        confirmationLabel.textContent = componentArgs.participant_name
+          ? `確認のため「${componentArgs.participant_name}」と入力してください`
+          : "確認のため参加者名を入力してください";
+        confirmationInput.maxLength = Math.max(
+          1,
+          Number(componentArgs.max_chars) || 256,
+        );
+        confirmationInput.disabled = !componentArgs.participant_name;
+        backButton.disabled = false;
+        updateControls();
+        window.requestAnimationFrame(setFrameHeight);
+      }
+
+      function sendAction(action) {
+        if (action === "save" && saveButton.disabled) {
+          return;
+        }
+        actionSequence += 1;
+        setComponentValue({
+          action,
+          confirmation: normalized(confirmationInput.value),
+          nonce: `${Date.now()}-${actionSequence}`,
+        });
+      }
+
+      confirmationInput.addEventListener("input", updateControls);
+      saveButton.addEventListener("click", () => sendAction("save"));
+      backButton.addEventListener("click", () => sendAction("back"));
+      window.addEventListener("message", (event) => {
+        if (!event.data || event.data.type !== "streamlit:render") {
+          return;
+        }
+        applyRenderArgs(event.data.args || {});
+      });
+      window.addEventListener("resize", setFrameHeight);
+
+      setComponentReady();
+    </script>
+  </body>
+</html>

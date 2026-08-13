@@ -1,0 +1,3471 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      :root {
+        color-scheme: light;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        --border: rgba(49, 51, 63, 0.22);
+        --cell-border: rgba(49, 51, 63, 0.18);
+        --background: #ffffff;
+        --header: rgba(49, 51, 63, 0.06);
+        --card: #ffffff;
+        --subtle: rgba(49, 51, 63, 0.04);
+        --text: #31333f;
+        --muted: #667085;
+        --primary: #175cd3;
+        --primary-bg: #eff8ff;
+        --university: #175cd3;
+        --university-bg: #dbeafe;
+        --high-school: #344054;
+        --high-school-bg: #f2f4f7;
+        --warning: #b54708;
+        --warning-bg: #fffaeb;
+        --error: #b42318;
+        --error-bg: #fff1f3;
+        --success: #027a48;
+        --success-bg: #ecfdf3;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        color: var(--text);
+        background: transparent;
+        font-size: 14px;
+      }
+      button,
+      input,
+      select {
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        color: var(--text);
+        background: var(--background);
+        font: inherit;
+      }
+      button {
+        min-height: 32px;
+        padding: 5px 10px;
+        cursor: pointer;
+        font-size: 13px;
+        font-weight: 650;
+      }
+      button:hover:not(:disabled) {
+        border-color: var(--primary);
+        background: var(--primary-bg);
+      }
+      button:focus-visible,
+      input:focus-visible,
+      select:focus-visible,
+      summary:focus-visible {
+        outline: 3px solid rgba(23, 92, 211, 0.24);
+        outline-offset: 1px;
+      }
+      button:disabled {
+        cursor: not-allowed;
+        opacity: 0.48;
+      }
+      .operation-guide {
+        margin-bottom: 9px;
+        padding: 9px 11px;
+        border-left: 4px solid var(--primary);
+        border-radius: 7px;
+        background: rgba(23, 92, 211, 0.07);
+        line-height: 1.5;
+      }
+      .operation-guide strong {
+        display: block;
+        margin-bottom: 2px;
+      }
+      .toolbar {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 6px;
+        margin-bottom: 9px;
+        padding: 7px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: var(--subtle);
+      }
+      .toolbar-group {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+      .toolbar-spacer {
+        flex: 1 1 24px;
+      }
+      .status-pill,
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        min-height: 26px;
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        padding: 3px 8px;
+        color: var(--muted);
+        background: var(--background);
+        font-size: 12px;
+        font-weight: 700;
+        line-height: 1.25;
+      }
+      .status-pill.dirty {
+        border-color: #f79009;
+        color: var(--warning);
+        background: var(--warning-bg);
+      }
+      .status-pill.selected {
+        border-color: var(--primary);
+        color: var(--primary);
+        background: var(--primary-bg);
+      }
+      .status-pill.warning {
+        border-color: #f79009;
+        color: var(--warning);
+        background: var(--warning-bg);
+      }
+      .status-pill.error {
+        border-color: var(--error);
+        color: var(--error);
+        background: var(--error-bg);
+      }
+      .editor-layout {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        gap: 12px;
+        align-items: start;
+        min-width: 0;
+      }
+      .editor-layout.has-detail {
+        grid-template-columns: minmax(0, 1.45fr) minmax(280px, 0.78fr);
+      }
+      .overview-pane,
+      .detail-panel {
+        min-width: 0;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        background: var(--background);
+      }
+      .pane-heading {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 8px;
+        padding: 9px 11px;
+        border-bottom: 1px solid var(--border);
+        background: var(--header);
+      }
+      .pane-heading h3 {
+        margin: 0 0 2px;
+        font-size: 15px;
+      }
+      .pane-heading p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.4;
+      }
+      .detail-heading-actions {
+        display: flex;
+        flex: 0 0 auto;
+        align-items: center;
+        gap: 5px;
+      }
+      .detail-close {
+        min-height: 29px;
+        padding: 4px 8px;
+        color: var(--muted);
+        background: transparent;
+        font-size: 12px;
+        white-space: nowrap;
+      }
+      .detail-close:hover {
+        border-color: var(--primary);
+        color: var(--primary);
+        background: var(--primary-bg);
+      }
+      .calendar-wrap {
+        width: 100%;
+        max-width: 100%;
+        max-height: 650px;
+        overflow: auto;
+        border-radius: 0 0 6px 6px;
+        background: var(--background);
+      }
+      table {
+        width: 100%;
+        min-width: 780px;
+        border-collapse: collapse;
+        table-layout: fixed;
+        font-size: 14px;
+      }
+      table.availability-calendar {
+        min-width: 1180px;
+      }
+      table.availability-calendar td.slot-cell,
+      table.availability-calendar th {
+        min-width: 160px;
+      }
+      th,
+      td {
+        border: 1px solid var(--cell-border);
+        padding: 6px 8px;
+        vertical-align: top;
+      }
+      th {
+        position: sticky;
+        top: 0;
+        z-index: 3;
+        width: auto;
+        min-width: 108px;
+        max-width: none;
+        background: var(--header);
+        font-weight: 650;
+        text-align: center;
+      }
+      th.date-column,
+      td.date-column {
+        position: sticky;
+        left: 0;
+        z-index: 2;
+        width: 140px;
+        min-width: 140px;
+        max-width: 140px;
+        background: var(--header);
+        font-weight: 650;
+        white-space: nowrap;
+      }
+      th.date-column {
+        z-index: 4;
+      }
+      td.date-column.saturday {
+        color: #175cd3;
+        background: rgba(82, 180, 255, 0.16);
+        font-weight: 400;
+      }
+      td.date-column.sunday {
+        color: #b42318;
+        background: rgba(255, 99, 132, 0.14);
+        font-weight: 400;
+      }
+      td.slot-cell {
+        width: auto;
+        min-width: 108px;
+        max-width: none;
+        background: var(--background);
+      }
+      td.date-column.excluded,
+      td.slot-cell.excluded {
+        background: #f2f4f7;
+        color: #667085;
+      }
+      td.date-column.excluded {
+        font-weight: 650;
+      }
+      .session-summary {
+        display: block;
+        width: 100%;
+        min-height: 0;
+        margin-bottom: 5px;
+        padding: 7px 8px;
+        border: 1px solid var(--border);
+        border-left: 3px solid transparent;
+        border-radius: 6px;
+        text-align: left;
+        background: var(--card);
+      }
+      .session-summary:last-of-type {
+        margin-bottom: 4px;
+      }
+      .session-summary.selected {
+        border-color: var(--primary);
+        border-left-color: var(--primary);
+        box-shadow: 0 0 0 2px rgba(23, 92, 211, 0.16);
+        background: var(--primary-bg);
+      }
+      .session-summary.has-warning:not(.selected) {
+        border-left-color: #f79009;
+      }
+      .session-summary.has-error:not(.selected) {
+        border-left-color: var(--error);
+      }
+      .summary-header,
+      .summary-role {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        min-width: 0;
+      }
+      .summary-header {
+        flex-wrap: wrap;
+        margin-bottom: 4px;
+      }
+      .summary-role {
+        display: block;
+        margin-top: 3px;
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 500;
+        line-height: 1.3;
+      }
+      .summary-names {
+        min-width: 0;
+        display: flex;
+        align-items: baseline;
+        gap: 4px;
+        margin-top: 2px;
+        padding-left: 2px;
+        white-space: normal;
+      }
+      .summary-count {
+        flex: 0 0 auto;
+        color: var(--muted);
+      }
+      .summary-name-list {
+        display: block;
+        flex: 1 1 auto;
+        min-width: 0;
+        overflow-wrap: anywhere;
+        word-break: normal;
+      }
+      .summary-name {
+        display: inline;
+      }
+      .badge {
+        min-height: 22px;
+        padding: 2px 6px;
+        font-size: 11px;
+        white-space: nowrap;
+      }
+      .badge.mode {
+        border-color: rgba(25, 118, 210, 0.4);
+        color: #0d47a1;
+        background: rgba(25, 118, 210, 0.1);
+      }
+      .badge.mode.in-person {
+        border-color: rgba(46, 125, 50, 0.4);
+        color: #1b5e20;
+        background: rgba(46, 125, 50, 0.1);
+      }
+      .badge.mode.zoom {
+        border-color: rgba(25, 118, 210, 0.4);
+        color: #0d47a1;
+        background: rgba(25, 118, 210, 0.1);
+      }
+      .badge.lock {
+        color: var(--primary);
+        background: transparent;
+      }
+      .badge.warning {
+        border-color: #f79009;
+        color: var(--warning);
+        background: var(--warning-bg);
+      }
+      .badge.error {
+        border-color: var(--error);
+        color: var(--error);
+        background: var(--error-bg);
+      }
+      .role-mark {
+        flex: 0 0 auto;
+        min-width: 25px;
+        border-radius: 999px;
+        padding: 1px 5px;
+        text-align: center;
+        font-size: 11px;
+        font-weight: 800;
+      }
+      .role-mark.university {
+        color: var(--university);
+        background: var(--university-bg);
+      }
+      .role-mark.high-school {
+        color: var(--high-school);
+        background: var(--high-school-bg);
+      }
+      .role-mark.unassigned {
+        color: #9a6700;
+        background: rgba(234, 179, 8, 0.18);
+      }
+      .member-name-line {
+        display: flex;
+        min-width: 0;
+        align-items: center;
+        gap: 5px;
+      }
+      .previous-role-badge {
+        flex: 0 0 auto;
+        border: 1px solid #cbd5e1;
+        border-radius: 999px;
+        padding: 1px 4px;
+        color: #667085;
+        background: #f2f4f7;
+        font-size: 10px;
+        font-weight: 650;
+        line-height: 1.2;
+        white-space: nowrap;
+      }
+      button.add-session {
+        width: 100%;
+        min-height: 30px;
+        border-style: dashed;
+        color: var(--muted);
+        background: var(--subtle);
+        font-size: 12px;
+      }
+      .detail-panel {
+        max-height: 650px;
+        overflow: auto;
+      }
+      .detail-panel > .pane-heading {
+        position: sticky;
+        top: 0;
+        z-index: 5;
+      }
+      .detail-body {
+        padding: 11px;
+      }
+      .pane-tools {
+        display: flex;
+        flex: 0 0 auto;
+        align-items: center;
+        gap: 5px;
+      }
+      .view-toggle {
+        min-height: 29px;
+        padding: 4px 8px;
+        border-radius: 999px;
+        color: var(--muted);
+        background: transparent;
+        font-size: 12px;
+        font-weight: 700;
+        white-space: nowrap;
+      }
+      .view-toggle.active {
+        border-color: var(--primary);
+        color: var(--primary);
+        background: var(--primary-bg);
+      }
+      .availability-preview {
+        margin-top: 5px;
+        padding-top: 5px;
+        border-top: 1px dashed var(--cell-border);
+      }
+      .availability-preview-heading {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 5px;
+        margin-bottom: 4px;
+        color: var(--muted);
+        font-size: 11px;
+        font-weight: 700;
+      }
+      .availability-preview-note {
+        font-weight: 500;
+      }
+      .availability-preview-instruction {
+        margin: 0 0 4px;
+        color: var(--muted);
+        font-size: 10px;
+        line-height: 1.35;
+      }
+      .availability-list {
+        display: grid;
+        gap: 4px;
+        max-height: 210px;
+        overflow: auto;
+      }
+      .availability-person {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: center;
+        max-width: 100%;
+        border: 1px solid var(--cell-border);
+        border-radius: 7px;
+        color: var(--text);
+        background: var(--subtle);
+        font-size: 11px;
+        line-height: 1.25;
+        overflow: hidden;
+      }
+      .availability-person.zoom-only {
+        border-color: rgba(25, 118, 210, 0.4);
+        color: #0d47a1;
+        background: rgba(25, 118, 210, 0.1);
+      }
+      .availability-person.assigned {
+        border-color: #d89b00;
+        color: #6f4d00;
+        background: rgba(234, 179, 8, 0.2);
+        box-shadow: 0 0 0 1px rgba(234, 179, 8, 0.18);
+      }
+      .availability-person-main {
+        display: flex;
+        width: 100%;
+        min-width: 0;
+        min-height: 30px;
+        align-items: center;
+        gap: 5px;
+        border: 0;
+        border-radius: 0;
+        padding: 0 6px;
+        color: inherit;
+        background: transparent;
+        text-align: left;
+        font: inherit;
+        cursor: pointer;
+      }
+      .availability-person-main:hover {
+        color: var(--primary);
+        background: var(--primary-bg);
+      }
+      .availability-person.assigned .availability-person-main:hover {
+        color: #6f4d00;
+        background: rgba(234, 179, 8, 0.28);
+      }
+      .availability-name {
+        flex: 1 1 auto;
+        min-width: 0;
+        font-size: 11px;
+        font-weight: 700;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .availability-person-note {
+        flex: 0 0 auto;
+        margin-right: 5px;
+        color: var(--muted);
+        font-size: 10px;
+        white-space: nowrap;
+      }
+      .availability-person.assigned .availability-person-note {
+        color: #8a6100;
+        font-weight: 800;
+      }
+      .availability-role-actions {
+        display: flex;
+        align-self: stretch;
+      }
+      .availability-role-button {
+        min-width: 27px;
+        min-height: 30px;
+        padding: 3px 5px;
+        border: 0;
+        border-left: 1px solid var(--cell-border);
+        border-radius: 0;
+        color: var(--muted);
+        background: transparent;
+        font-size: 11px;
+        font-weight: 800;
+      }
+      .availability-role-button:hover,
+      .availability-role-button.active {
+        color: var(--primary);
+        background: var(--primary-bg);
+      }
+      .availability-empty {
+        margin: 0;
+        color: var(--muted);
+        font-size: 11px;
+      }
+      .empty-detail {
+        min-height: 220px;
+        display: grid;
+        place-content: center;
+        padding: 24px;
+        color: var(--muted);
+        text-align: center;
+        line-height: 1.6;
+      }
+      .detail-section {
+        margin-top: 10px;
+        padding-top: 10px;
+        border-top: 1px solid var(--border);
+      }
+      .detail-section:first-child {
+        margin-top: 0;
+        padding-top: 0;
+        border-top: 0;
+      }
+      .section-heading {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        margin-bottom: 7px;
+      }
+      .section-heading h4 {
+        margin: 0;
+        font-size: 14px;
+      }
+      .mode-actions {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 7px;
+      }
+      .lock-actions {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        gap: 7px;
+      }
+      .mode-button,
+      .lock-toggle {
+        min-height: 38px;
+        background: transparent;
+      }
+      .mode-button.active,
+      .lock-toggle.locked {
+        border-color: var(--primary);
+        color: var(--primary);
+        background: var(--primary-bg);
+      }
+      .issue-list {
+        display: grid;
+        gap: 5px;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+      .issue-item {
+        border-left: 4px solid #f79009;
+        border-radius: 5px;
+        padding: 6px 8px;
+        color: var(--warning);
+        background: var(--warning-bg);
+        font-size: 12px;
+        line-height: 1.45;
+      }
+      .issue-item.error {
+        border-left-color: var(--error);
+        color: var(--error);
+        background: var(--error-bg);
+      }
+      .role-block {
+        margin-top: 9px;
+        padding: 9px;
+        border: 1px solid transparent;
+        border-radius: 7px;
+      }
+      .role-block.university {
+        border-color: rgba(23, 92, 211, 0.18);
+        background: rgba(23, 92, 211, 0.06);
+      }
+      .role-block.high-school {
+        border-color: rgba(52, 64, 84, 0.18);
+        background: rgba(52, 64, 84, 0.06);
+      }
+      .participant-block {
+        border-color: rgba(49, 51, 63, 0.18);
+        background: var(--subtle);
+      }
+      .detail-hint {
+        margin: -2px 0 8px;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.45;
+      }
+      .role-title {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 6px;
+        margin-bottom: 7px;
+        font-weight: 800;
+      }
+      .role-title.mismatch {
+        color: var(--warning);
+      }
+      .member-list {
+        display: grid;
+        gap: 6px;
+      }
+      .member-row {
+        display: grid;
+        grid-template-columns: minmax(80px, 1fr) auto;
+        gap: 6px;
+        align-items: center;
+        min-height: 38px;
+        border: 1px solid var(--border);
+        border-radius: 7px;
+        padding: 6px;
+        background: var(--card);
+      }
+      .member-row.unavailable {
+        border-color: #f79009;
+        background: var(--warning-bg);
+      }
+      .member-name-wrap {
+        min-width: 0;
+      }
+      .member-name {
+        min-width: 0;
+        flex: 1 1 auto;
+        display: block;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-weight: 700;
+      }
+      .member-note {
+        display: block;
+        margin-top: 2px;
+        color: var(--muted);
+        font-size: 11px;
+      }
+      .member-note.warning {
+        color: var(--warning);
+      }
+      .member-actions {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        gap: 4px;
+      }
+      .chip-action {
+        min-height: 30px;
+        padding: 4px 7px;
+        font-size: 12px;
+      }
+      .chip-action.role-assign {
+        border-color: rgba(23, 92, 211, 0.35);
+        color: var(--primary);
+        background: var(--primary-bg);
+      }
+      .member-role-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+      }
+      .member-role-toggle {
+        min-width: 78px;
+        min-height: 30px;
+        border-color: var(--border);
+        color: var(--muted);
+        background: var(--card);
+        font-size: 11px;
+        font-weight: 750;
+      }
+      .member-role-toggle.active {
+        border-color: #72b7e8;
+        color: #0d47a1;
+        background: #dff2ff;
+      }
+      .member-role-toggle:hover:not(:disabled) {
+        border-color: #72b7e8;
+        color: #0d47a1;
+        background: var(--card);
+      }
+      .member-role-toggle.active:hover:not(:disabled) {
+        background: #eef8ff;
+      }
+      .chip-action.locked {
+        border-color: var(--primary);
+        color: var(--primary);
+        background: var(--primary-bg);
+      }
+      .chip-action.danger,
+      .danger {
+        color: var(--error);
+      }
+      .empty-message {
+        margin: 0;
+        color: var(--muted);
+        font-size: 12px;
+      }
+      .participant-picker {
+        margin-top: 7px;
+        border: 1px dashed var(--border);
+        border-radius: 7px;
+        background: var(--background);
+      }
+      .participant-picker summary {
+        min-height: 38px;
+        padding: 9px;
+        cursor: pointer;
+        color: var(--primary);
+        font-weight: 750;
+      }
+      .picker-body {
+        padding: 0 8px 8px;
+      }
+      .participant-search {
+        width: 100%;
+        min-height: 36px;
+        margin-bottom: 6px;
+        padding: 6px 9px;
+      }
+      .participant-options {
+        display: grid;
+        gap: 4px;
+        max-height: 230px;
+        overflow: auto;
+      }
+      .participant-option {
+        display: grid;
+        grid-template-columns: minmax(90px, 1fr) auto;
+        gap: 7px;
+        align-items: center;
+        min-height: 42px;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: 5px 6px;
+      }
+      .participant-option.blocked {
+        background: var(--subtle);
+      }
+      .participant-option-name {
+        display: block;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-weight: 650;
+      }
+      .participant-option-reason {
+        display: block;
+        margin-top: 2px;
+        color: var(--muted);
+        font-size: 11px;
+        line-height: 1.3;
+      }
+      .participant-option-reason.available {
+        color: var(--success);
+      }
+      .delete-session {
+        width: 100%;
+        min-height: 38px;
+        border-color: rgba(180, 35, 24, 0.42);
+      }
+      @media (max-width: 720px) {
+        .editor-layout.has-detail {
+          grid-template-columns: minmax(0, 1fr);
+        }
+        .editor-layout.has-detail .detail-panel {
+          order: -1;
+          max-height: min(72vh, 650px);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+      let args = {};
+      let sessions = [];
+      let initialSessions = [];
+      let sessionWideLocks = {};
+      let initialSessionWideLocks = {};
+      let participantsById = {};
+      let selectedSessionId = "";
+      let detailPanelClosed = false;
+      let undoStack = [];
+      let redoStack = [];
+      let activeServerStateId = "";
+      let initialized = false;
+      let lastActionMessage = "";
+      let lastFrameHeight = -1;
+      let calendarScrollPosition = { left: 0, top: 0 };
+      let detailScrollTop = 0;
+      let participantPickerOpen = false;
+      let participantPickerSessionId = "";
+      let participantPickerQuery = "";
+      let calendarViewMode = "summary";
+      const HISTORY_LIMIT = 40;
+      // Older saved editor states may still contain these labels; they are
+      // retained only for backward-compatible state normalization.
+
+      function sendMessage(type, data) {
+        window.parent.postMessage(
+          { isStreamlitMessage: true, type, ...data },
+          "*",
+        );
+      }
+
+      function setComponentReady() {
+        sendMessage("streamlit:componentReady", { apiVersion: 1 });
+      }
+
+      function setComponentValue(value) {
+        sendMessage("streamlit:setComponentValue", {
+          value,
+          dataType: "json",
+        });
+      }
+
+      function setFrameHeight() {
+        const root = document.getElementById("root");
+        const height = Math.max(
+          1,
+          Math.ceil(root ? root.getBoundingClientRect().height : 0),
+        );
+        if (height <= 0 || height === lastFrameHeight) {
+          return;
+        }
+        lastFrameHeight = height;
+        sendMessage("streamlit:setFrameHeight", { height });
+      }
+
+      function observeFrameHeight() {
+        const notify = () =>
+          window.requestAnimationFrame(() => {
+            lastFrameHeight = -1;
+            setFrameHeight();
+          });
+        window.addEventListener("resize", notify);
+        if ("ResizeObserver" in window) {
+          const observer = new ResizeObserver(notify);
+          observer.observe(document.documentElement);
+          observer.observe(document.body);
+          observer.observe(document.getElementById("root"));
+        }
+      }
+
+      function deepClone(value) {
+        return JSON.parse(JSON.stringify(value));
+      }
+
+      function showOptimizationControls() {
+        return args.show_optimization_controls !== false;
+      }
+
+      function showDateLockControls() {
+        return (
+          showOptimizationControls() &&
+          args.show_date_lock_controls !== false
+        );
+      }
+
+      function localStateKey() {
+        const storageKey = String(args.storage_key || "");
+        return storageKey
+          ? `schedule-calendar-editor:${storageKey}`
+          : "";
+      }
+
+      function localHistoryKey() {
+        const key = localStateKey();
+        return key ? `${key}:history` : "";
+      }
+
+      function valueFromState() {
+        return {
+          sessions: deepClone(sessions).map((session) => ({
+            ...session,
+            lock_session_wide: isWholeSessionLocked(session),
+          })),
+          server_state_id: args.server_state_id || "",
+        };
+      }
+
+      function readLocalJson(key) {
+        if (!key) {
+          return null;
+        }
+        try {
+          const raw = window.localStorage.getItem(key);
+          return raw ? JSON.parse(raw) : null;
+        } catch (_error) {
+          return null;
+        }
+      }
+
+      function readStoredValue() {
+        return readLocalJson(localStateKey());
+      }
+
+      function storedValueMatchesServer(storedValue) {
+        return Boolean(
+          storedValue &&
+            typeof storedValue === "object" &&
+            Array.isArray(storedValue.sessions) &&
+            args.server_state_id &&
+            storedValue.server_state_id === args.server_state_id,
+        );
+      }
+
+      function removeStoredValue() {
+        for (const key of [localStateKey(), localHistoryKey()]) {
+          if (!key) {
+            continue;
+          }
+          try {
+            window.localStorage.removeItem(key);
+          } catch (_error) {
+            continue;
+          }
+        }
+      }
+
+      function persistValue(value) {
+        const key = localStateKey();
+        if (!key) {
+          return;
+        }
+        try {
+          window.localStorage.setItem(key, JSON.stringify(value));
+        } catch (_error) {
+          return;
+        }
+      }
+
+      function persistHistory() {
+        const key = localHistoryKey();
+        if (!key) {
+          return;
+        }
+        const value = {
+          server_state_id: args.server_state_id || "",
+          selected_session_id: selectedSessionId,
+          detail_panel_closed: detailPanelClosed,
+          session_wide_locks: sessionWideLocks,
+          undo_stack: undoStack,
+          redo_stack: redoStack,
+        };
+        try {
+          window.localStorage.setItem(key, JSON.stringify(value));
+        } catch (_error) {
+          return;
+        }
+      }
+
+      function uniqueIds(values) {
+        return [...new Set((values || []).map(String).filter(Boolean))];
+      }
+
+      function normalizeSession(rawSession) {
+        const session = deepClone(rawSession || {});
+        session.session_id =
+          String(session.session_id || "") ||
+          `editor-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+        session.date = String(session.date || "");
+        session.period = Number(session.period || 1);
+        session.group_index = Number(session.group_index || 1);
+        session.meeting_mode =
+          session.meeting_mode === "zoom" ? "zoom" : "in_person";
+        session.university_role_member_ids = uniqueIds(
+          session.university_role_member_ids,
+        );
+        session.high_school_role_member_ids = uniqueIds(
+          session.high_school_role_member_ids,
+        );
+        session.display_university_role_member_ids = uniqueIds(
+          session.display_university_role_member_ids,
+        );
+        session.display_high_school_role_member_ids = uniqueIds(
+          session.display_high_school_role_member_ids,
+        );
+        session.participant_member_ids = uniqueIds([
+          ...(session.participant_member_ids || []),
+          ...session.university_role_member_ids,
+          ...session.high_school_role_member_ids,
+        ]);
+        session.locked_participant_member_ids = uniqueIds([
+          ...(session.locked_participant_member_ids || []),
+          ...(session.locked_university_role_member_ids || []),
+          ...(session.locked_high_school_role_member_ids || []),
+          ...(session.role_locked_university_role_member_ids || []),
+          ...(session.role_locked_high_school_role_member_ids || []),
+        ]).filter((participantId) =>
+          session.participant_member_ids.includes(participantId),
+        );
+        session.lock_session = Boolean(session.lock_session);
+        session.lock_session_wide =
+          typeof session.lock_session_wide === "boolean"
+            ? session.lock_session_wide
+            : null;
+        session.lock_meeting_mode = false;
+        session.locked_university_role_member_ids = uniqueIds(
+          session.locked_university_role_member_ids,
+        ).filter((participantId) =>
+          session.university_role_member_ids.includes(participantId),
+        );
+        session.locked_high_school_role_member_ids = uniqueIds(
+          session.locked_high_school_role_member_ids,
+        ).filter((participantId) =>
+          session.high_school_role_member_ids.includes(participantId),
+        );
+        session.role_locked_university_role_member_ids = uniqueIds(
+          session.role_locked_university_role_member_ids,
+        ).filter((participantId) =>
+          session.university_role_member_ids.includes(participantId),
+        );
+        session.role_locked_high_school_role_member_ids = uniqueIds(
+          session.role_locked_high_school_role_member_ids,
+        ).filter((participantId) =>
+          session.high_school_role_member_ids.includes(participantId),
+        );
+        session.locked_university_role_member_ids = uniqueIds([
+          ...session.locked_university_role_member_ids,
+          ...session.role_locked_university_role_member_ids,
+        ]);
+        session.locked_high_school_role_member_ids = uniqueIds([
+          ...session.locked_high_school_role_member_ids,
+          ...session.role_locked_high_school_role_member_ids,
+        ]);
+        return session;
+      }
+
+      function allSessionMemberIds(session) {
+        return uniqueIds([
+          ...(session.participant_member_ids || []),
+          ...(session.university_role_member_ids || []),
+          ...(session.high_school_role_member_ids || []),
+        ]);
+      }
+
+      function unassignedMemberIds(session) {
+        const assigned = new Set([
+          ...(session.university_role_member_ids || []),
+          ...(session.high_school_role_member_ids || []),
+        ]);
+        return allSessionMemberIds(session).filter(
+          (participantId) => !assigned.has(String(participantId)),
+        );
+      }
+
+      function removeTransientEmptySessions() {
+        const initialIds = new Set(
+          initialSessions.map((session) => String(session.session_id)),
+        );
+        const transientIds = new Set(
+          sessions
+            .filter(
+              (session) =>
+                !initialIds.has(String(session.session_id)) &&
+                allSessionMemberIds(session).length === 0,
+            )
+            .map((session) => String(session.session_id)),
+        );
+        if (!transientIds.size) {
+          return false;
+        }
+        sessions = sessions.filter(
+          (session) => !transientIds.has(String(session.session_id)),
+        );
+        for (const sessionId of transientIds) {
+          delete sessionWideLocks[sessionId];
+        }
+        if (transientIds.has(String(selectedSessionId))) {
+          selectedSessionId = "";
+        }
+        return true;
+      }
+
+      function inferWholeSessionLock(session) {
+        if (typeof session.lock_session_wide === "boolean") {
+          return session.lock_session_wide;
+        }
+        if (!session.lock_session) {
+          return false;
+        }
+        const lockedIds = new Set([
+          ...(session.locked_participant_member_ids || []),
+          ...(session.locked_university_role_member_ids || []),
+          ...(session.locked_high_school_role_member_ids || []),
+        ].map(String));
+        return allSessionMemberIds(session).every((participantId) =>
+          lockedIds.has(String(participantId)),
+        );
+      }
+
+      function normalizeSessionWideLocks(rawLocks, targetSessions) {
+        const source =
+          rawLocks && typeof rawLocks === "object" ? rawLocks : {};
+        const normalized = {};
+        for (const session of targetSessions || []) {
+          const sessionId = String(session.session_id);
+          normalized[sessionId] = Object.prototype.hasOwnProperty.call(
+            source,
+            sessionId,
+          )
+            ? Boolean(source[sessionId])
+            : inferWholeSessionLock(session);
+        }
+        return normalized;
+      }
+
+      function isWholeSessionLocked(session) {
+        return Boolean(
+          session && sessionWideLocks[String(session.session_id)],
+        );
+      }
+
+      function normalizeSnapshot(rawSnapshot) {
+        if (
+          !rawSnapshot ||
+          typeof rawSnapshot !== "object" ||
+          !Array.isArray(rawSnapshot.sessions)
+        ) {
+          return null;
+        }
+        return {
+          sessions: rawSnapshot.sessions.map(normalizeSession),
+          session_wide_locks:
+            rawSnapshot.session_wide_locks &&
+            typeof rawSnapshot.session_wide_locks === "object"
+              ? deepClone(rawSnapshot.session_wide_locks)
+              : {},
+          selected_session_id: String(
+            rawSnapshot.selected_session_id || "",
+          ),
+          label: String(rawSnapshot.label || "編集"),
+        };
+      }
+
+      function rebuildParticipants(nextArgs) {
+        participantsById = {};
+        for (const participant of nextArgs.participants || []) {
+          participantsById[String(participant.id)] = participant;
+        }
+      }
+
+      function ensureSelection() {
+        if (
+          selectedSessionId &&
+          sessions.some(
+            (session) => session.session_id === selectedSessionId,
+          )
+        ) {
+          return;
+        }
+        if (detailPanelClosed) {
+          selectedSessionId = "";
+          return;
+        }
+        selectedSessionId = sessions.length
+          ? String(sessions[0].session_id)
+          : "";
+      }
+
+      function initializeState(nextArgs) {
+        const nextServerStateId = String(
+          (nextArgs && nextArgs.server_state_id) || "",
+        );
+        if (
+          initialized &&
+          nextServerStateId &&
+          nextServerStateId === activeServerStateId
+        ) {
+          args = nextArgs || {};
+          rebuildParticipants(args);
+          sessionWideLocks = normalizeSessionWideLocks(
+            sessionWideLocks,
+            sessions,
+          );
+          ensureSelection();
+          return;
+        }
+
+        args = nextArgs || {};
+        activeServerStateId = nextServerStateId;
+        const serverSessions = (
+          args.initial_sessions ||
+          args.sessions ||
+          []
+        ).map(normalizeSession);
+        initialSessions = deepClone(serverSessions);
+        initialSessionWideLocks = normalizeSessionWideLocks(
+          {},
+          serverSessions,
+        );
+        const rawStoredValue = readStoredValue();
+        const storedValue = storedValueMatchesServer(rawStoredValue)
+          ? rawStoredValue
+          : null;
+        if (rawStoredValue && !storedValue) {
+          removeStoredValue();
+        }
+        sessions = (
+          (storedValue && storedValue.sessions) ||
+          serverSessions
+        ).map(normalizeSession);
+        sessionWideLocks = normalizeSessionWideLocks({}, sessions);
+        rebuildParticipants(args);
+
+        undoStack = [];
+        redoStack = [];
+        selectedSessionId = "";
+        detailPanelClosed = false;
+        const storedHistory = readLocalJson(localHistoryKey());
+        if (
+          storedValue &&
+          storedHistory &&
+          storedHistory.server_state_id === args.server_state_id
+        ) {
+          undoStack = (storedHistory.undo_stack || [])
+            .map(normalizeSnapshot)
+            .filter(Boolean)
+            .slice(-HISTORY_LIMIT);
+          redoStack = (storedHistory.redo_stack || [])
+            .map(normalizeSnapshot)
+            .filter(Boolean)
+            .slice(-HISTORY_LIMIT);
+          selectedSessionId = String(
+            storedHistory.selected_session_id || "",
+          );
+          detailPanelClosed = Boolean(
+            storedHistory.detail_panel_closed,
+          );
+          sessionWideLocks = normalizeSessionWideLocks(
+            storedHistory.session_wide_locks,
+            sessions,
+          );
+        }
+        const cleaned = removeTransientEmptySessions();
+        ensureSelection();
+        if (cleaned) {
+          persistValue(valueFromState());
+          persistHistory();
+        }
+        lastActionMessage = "";
+        initialized = true;
+      }
+
+      function stableSessions(value) {
+        return JSON.stringify(value || []);
+      }
+
+      function isDirty() {
+        return (
+          stableSessions(sessions) !== stableSessions(initialSessions) ||
+          JSON.stringify(sessionWideLocks) !==
+            JSON.stringify(initialSessionWideLocks)
+        );
+      }
+
+      function currentSession() {
+        return (
+          sessions.find(
+            (session) => session.session_id === selectedSessionId,
+          ) || null
+        );
+      }
+
+      function slotKey(day, period) {
+        return `${day}#${period}`;
+      }
+
+      function isExcludedDay(day) {
+        return (args.excluded_dates || []).includes(String(day));
+      }
+
+      function participantCanAttend(participant, session) {
+        if (!participant) {
+          return false;
+        }
+        const key = slotKey(session.date, session.period);
+        const inPerson = new Set(participant.availability || []);
+        const zoom = new Set(participant.zoom_availability || []);
+        return (
+          inPerson.has(key) ||
+          (session.meeting_mode === "zoom" && zoom.has(key))
+        );
+      }
+
+      function participantAttendanceKinds(participant, day, period) {
+        if (!participant) {
+          return [];
+        }
+        const key = slotKey(day, period);
+        const kinds = [];
+        if ((participant.availability || []).includes(key)) {
+          kinds.push("対面");
+        }
+        if ((participant.zoom_availability || []).includes(key)) {
+          kinds.push("Zoom");
+        }
+        return kinds;
+      }
+
+      function setCalendarViewMode(mode) {
+        calendarViewMode = mode === "availability" ? mode : "summary";
+        participantPickerOpen = false;
+        participantPickerSessionId = "";
+        participantPickerQuery = "";
+        if (calendarViewMode === "availability") {
+          selectedSessionId = "";
+          detailPanelClosed = true;
+        }
+        persistHistory();
+        render();
+      }
+
+      function sessionsAtSlot(day, period) {
+        return sessions
+          .filter(
+            (session) =>
+              session.date === day &&
+              Number(session.period) === Number(period),
+          )
+          .sort(
+            (left, right) =>
+              Number(left.group_index) - Number(right.group_index),
+          );
+      }
+
+      function availabilityTargetSession(day, period) {
+        return sessionsAtSlot(day, period)[0] || null;
+      }
+
+      function ensureAvailabilityTargetSession(day, period) {
+        const existing = availabilityTargetSession(day, period);
+        if (existing) {
+          return existing;
+        }
+        addSession(day, period);
+        const created = currentSession();
+        return created &&
+          created.date === day &&
+          Number(created.period) === Number(period)
+          ? created
+          : null;
+      }
+
+      function setAvailabilityMeetingMode(session) {
+        const hasZoomParticipant = allSessionMemberIds(session).some(
+          (participantId) =>
+            participantAttendanceKinds(
+              participantsById[String(participantId)],
+              session.date,
+              session.period,
+            ).includes("Zoom"),
+        );
+        session.meeting_mode = hasZoomParticipant ? "zoom" : "in_person";
+      }
+
+      function removeParticipantFromSession(session, participantId) {
+        session.participant_member_ids = (
+          session.participant_member_ids || []
+        ).filter((value) => String(value) !== String(participantId));
+        session.locked_participant_member_ids = (
+          session.locked_participant_member_ids || []
+        ).filter((value) => String(value) !== String(participantId));
+        for (const field of [
+          "university_role_member_ids",
+          "high_school_role_member_ids",
+        ]) {
+          session[field] = (session[field] || []).filter(
+            (value) => String(value) !== String(participantId),
+          );
+          const lockedField = lockedFieldForRoleField(field);
+          session[lockedField] = (session[lockedField] || []).filter(
+            (value) => String(value) !== String(participantId),
+          );
+          const roleLockedField = roleLockedFieldForRoleField(field);
+          session[roleLockedField] = (
+            session[roleLockedField] || []
+          ).filter(
+            (value) => String(value) !== String(participantId),
+          );
+        }
+        syncSessionLockFlag(session);
+      }
+
+      function addAvailabilityParticipant(session, participantId) {
+        const reason = participantSelectionBlockReason(
+          session,
+          participantId,
+        );
+        if (reason) {
+          return;
+        }
+        const participant = participantsById[String(participantId)];
+        mutate(`${participant.name}さんを参加者へ追加`, () => {
+          session.participant_member_ids = uniqueIds([
+            ...(session.participant_member_ids || []),
+            String(participantId),
+          ]);
+          setAvailabilityMeetingMode(session);
+        });
+      }
+
+      function removeAvailabilityParticipant(session, participantId) {
+        const participant = participantsById[String(participantId)];
+        const name = participant ? participant.name : participantId;
+        mutate(`${name}さんを参加から外す`, () => {
+          removeParticipantFromSession(session, participantId);
+          setAvailabilityMeetingMode(session);
+        });
+      }
+
+      function handleAvailabilityParticipantClick(day, period, participantId) {
+        const slotSessions = sessionsAtSlot(day, period);
+        const existingSession = slotSessions.find((session) =>
+          allSessionMemberIds(session).includes(String(participantId)),
+        );
+        if (existingSession) {
+          removeAvailabilityParticipant(existingSession, participantId);
+          return;
+        }
+        const target = ensureAvailabilityTargetSession(day, period);
+        if (target) {
+          addAvailabilityParticipant(target, participantId);
+        }
+      }
+
+      function setAvailabilityParticipantRole(
+        session,
+        participantId,
+        role,
+      ) {
+        toggleMemberRole(session, participantId, role);
+      }
+
+      function createAvailabilityRoleActions(session, participantId) {
+        if (
+          !session ||
+          !allSessionMemberIds(session).includes(String(participantId))
+        ) {
+          return null;
+        }
+        const actions = document.createElement("div");
+        actions.className = "availability-role-actions";
+        for (const role of ["university", "high_school"]) {
+          const config = roleConfig(role);
+          const active = (session[config.field] || []).includes(
+            String(participantId),
+          );
+          const button = buttonWithText(
+            role === "university" ? "大" : "高",
+            "availability-role-button",
+          );
+          button.classList.toggle("active", active);
+          button.title = active
+            ? config.label + "を解除"
+            : config.label + "へ割り当て";
+          button.setAttribute("aria-pressed", active ? "true" : "false");
+          button.setAttribute(
+            "aria-label",
+            participantName(participantId) +
+              "さんの" +
+              (active ? config.label + "を解除" : config.label + "へ割り当て"),
+          );
+          button.addEventListener("click", () =>
+            setAvailabilityParticipantRole(session, participantId, role),
+          );
+          actions.appendChild(button);
+        }
+        return actions;
+      }
+
+      function createAvailabilityPreview(day, period) {
+        const preview = document.createElement("div");
+        preview.className = "availability-preview";
+        const slotSessions = sessionsAtSlot(day, period);
+        const targetSession = availabilityTargetSession(day, period);
+        const assignedSessionByParticipant = new Map();
+        for (const session of slotSessions) {
+          for (const participantId of allSessionMemberIds(session)) {
+            if (!assignedSessionByParticipant.has(String(participantId))) {
+              assignedSessionByParticipant.set(
+                String(participantId),
+                session,
+              );
+            }
+          }
+        }
+        const heading = document.createElement("div");
+        heading.className = "availability-preview-heading";
+        const title = document.createElement("span");
+        heading.appendChild(title);
+        const available = Object.values(participantsById)
+          .map((participant) => ({
+            participant,
+            kinds: participantAttendanceKinds(participant, day, period),
+          }))
+          .filter(
+            ({ participant, kinds }) =>
+              participant.active && participant.approved && kinds.length,
+          )
+          .sort((left, right) =>
+            String(left.participant.name).localeCompare(
+              String(right.participant.name),
+              "ja",
+            ),
+          );
+        title.textContent = "参加可能 " + available.length + "人";
+        preview.appendChild(heading);
+        if (!available.length) {
+          const empty = document.createElement("p");
+          empty.className = "availability-empty";
+          empty.textContent = "参加可能な人はいません。";
+          preview.appendChild(empty);
+          return preview;
+        }
+        const list = document.createElement("div");
+        list.className = "availability-list";
+        available.sort((left, right) => {
+          const leftSession = assignedSessionByParticipant.get(
+            String(left.participant.id),
+          );
+          const rightSession = assignedSessionByParticipant.get(
+            String(right.participant.id),
+          );
+          const leftRank = leftSession
+            ? leftSession === targetSession
+              ? 0
+              : 1
+            : 2;
+          const rightRank = rightSession
+            ? rightSession === targetSession
+              ? 0
+              : 1
+            : 2;
+          return (
+            leftRank - rightRank ||
+            String(left.participant.name).localeCompare(
+              String(right.participant.name),
+              "ja",
+            )
+          );
+        });
+        for (const { participant, kinds } of available) {
+          const participantId = String(participant.id);
+          const assignedSession = assignedSessionByParticipant.get(
+            participantId,
+          );
+          const item = document.createElement("div");
+          item.className = "availability-person";
+          if (!kinds.includes("対面")) {
+            item.classList.add("zoom-only");
+          }
+          if (assignedSession) {
+            item.classList.add("assigned");
+          }
+          const main = document.createElement("button");
+          main.type = "button";
+          main.className = "availability-person-main";
+          const name = document.createElement("span");
+          name.className = "availability-name";
+          name.textContent = String(participant.name);
+          main.title = assignedSession
+            ? "参加中。クリックして参加から外す"
+            : "クリックして参加";
+          main.setAttribute(
+            "aria-label",
+            assignedSession
+              ? String(participant.name) +
+                "さんは参加中。クリックして参加から外す"
+              : String(participant.name) + "さんをこのコマへ参加させる",
+          );
+          main.addEventListener("click", () =>
+            handleAvailabilityParticipantClick(day, period, participantId),
+          );
+          main.appendChild(name);
+          const note = document.createElement("span");
+          note.className = "availability-person-note";
+          note.textContent = assignedSession ? "参加" : kinds.join("・");
+          main.appendChild(note);
+          item.appendChild(main);
+          const roleActions = createAvailabilityRoleActions(
+            assignedSession,
+            participantId,
+          );
+          if (roleActions) {
+            item.appendChild(roleActions);
+          }
+          list.appendChild(item);
+        }
+        preview.appendChild(list);
+        return preview;
+      }
+
+      function assignedIdsInSlot(session) {
+        const assigned = new Set();
+        for (const other of sessions) {
+          if (
+            other.date !== session.date ||
+            Number(other.period) !== Number(session.period)
+          ) {
+            continue;
+          }
+          for (const participantId of allSessionMemberIds(other)) {
+            assigned.add(String(participantId));
+          }
+        }
+        return assigned;
+      }
+
+      function assignedInOtherGroup(session, participantId) {
+        return sessions.some(
+          (other) =>
+            other.session_id !== session.session_id &&
+            other.date === session.date &&
+            Number(other.period) === Number(session.period) &&
+            allSessionMemberIds(other).includes(String(participantId)),
+        );
+      }
+
+      function assignedTotalCount(participantId) {
+        const targetId = String(participantId);
+        return sessions.reduce(
+          (count, session) =>
+            count +
+            allSessionMemberIds(session).filter(
+              (value) => String(value) === targetId,
+            ).length,
+          0,
+        );
+      }
+
+      function assignedRoleCount(participantId, field) {
+        const targetId = String(participantId);
+        return sessions.reduce(
+          (count, session) =>
+            count +
+            (session[field] || []).filter(
+              (value) => String(value) === targetId,
+            ).length,
+          0,
+        );
+      }
+
+      function requiredTotalCount(participant) {
+        return Math.max(
+          0,
+          Number((participant && participant.required_total_count) || 0),
+        );
+      }
+
+      function roleConfig(role) {
+        const university = role === "university";
+        return {
+          role,
+          field: university
+            ? "university_role_member_ids"
+            : "high_school_role_member_ids",
+          lockedField: university
+            ? "locked_university_role_member_ids"
+            : "locked_high_school_role_member_ids",
+          roleLockedField: university
+            ? "role_locked_university_role_member_ids"
+            : "role_locked_high_school_role_member_ids",
+          otherField: university
+            ? "high_school_role_member_ids"
+            : "university_role_member_ids",
+          label: university ? "大学生役" : "高校生役",
+          otherLabel: university ? "高校生役" : "大学生役",
+          expected: Number(
+            university
+              ? args.university_role_size || 1
+              : args.high_school_role_size || 1,
+          ),
+          className: university ? "university" : "high-school",
+        };
+      }
+
+      function lockedFieldForRoleField(field) {
+        return "locked_participant_member_ids";
+      }
+
+      function roleLockedFieldForRoleField(field) {
+        return field === "university_role_member_ids"
+          ? "role_locked_university_role_member_ids"
+          : "role_locked_high_school_role_member_ids";
+      }
+
+      function sessionHasIndividualLocks(session) {
+        return Boolean(
+          (session.locked_participant_member_ids || []).length ||
+          (session.locked_university_role_member_ids || []).length ||
+            (session.locked_high_school_role_member_ids || []).length ||
+            (session.role_locked_university_role_member_ids || []).length ||
+            (session.role_locked_high_school_role_member_ids || []).length,
+        );
+      }
+
+      function syncSessionLockFlag(session) {
+        session.lock_session_wide = isWholeSessionLocked(session);
+        session.lock_session = Boolean(
+          isWholeSessionLocked(session) ||
+            session.lock_meeting_mode ||
+            sessionHasIndividualLocks(session),
+        );
+      }
+
+      function participantSelectionBlockReason(session, participantId) {
+        const participant = participantsById[String(participantId)];
+        if (!participant) {
+          return "登録されていない参加者です";
+        }
+        if (!participant.active || !participant.approved) {
+          return "現在の日程調整対象ではありません";
+        }
+        if (allSessionMemberIds(session).includes(String(participantId))) {
+          return "すでにこのコマの参加者に追加されています";
+        }
+        if (assignedInOtherGroup(session, participantId)) {
+          return "同じ時限の別の組に配置済みです";
+        }
+        if (
+          !participantAttendanceKinds(
+            participant,
+            session.date,
+            session.period,
+          ).length
+        ) {
+          return "この日時は参加可能回答外です";
+        }
+        return "";
+      }
+
+      function roleAssignmentBlockReason(session, field, participantId) {
+        const participant = participantsById[String(participantId)];
+        const config =
+          field === "university_role_member_ids"
+            ? roleConfig("university")
+            : roleConfig("high_school");
+        if (!participant) {
+          return "登録されていない参加者です";
+        }
+        if (!allSessionMemberIds(session).includes(String(participantId))) {
+          return "先にこのコマの参加者へ追加してください";
+        }
+        if ((session[field] || []).includes(String(participantId))) {
+          return `すでに${config.label}に割り当てられています`;
+        }
+        if ((session[config.otherField] || []).includes(String(participantId))) {
+          return "同じ組の両方の役割には配置できません";
+        }
+        return "";
+      }
+
+      function addBlockReason(session, field, participantId) {
+        return roleAssignmentBlockReason(session, field, participantId);
+      }
+
+      function moveBlockReason(session, fromField, toField, participantId) {
+        if ((session[toField] || []).includes(String(participantId))) {
+          return "両方の役割への重複配置はできません";
+        }
+        if (!(session[fromField] || []).includes(String(participantId))) {
+          return "現在の役割に配置されていません";
+        }
+        return "";
+      }
+
+      function uniqueIssues(issues) {
+        const seen = new Set();
+        return issues.filter((issue) => {
+          const key = `${issue.severity}:${issue.message}`;
+          if (seen.has(key)) {
+            return false;
+          }
+          seen.add(key);
+          return true;
+        });
+      }
+
+      function sessionIssues(session) {
+        const issues = [];
+        const university = roleConfig("university");
+        const highSchool = roleConfig("high_school");
+        for (const config of [university, highSchool]) {
+          const count = (session[config.field] || []).length;
+          if (count > config.expected) {
+            issues.push({
+              severity: "warning",
+              message:
+                `${config.label}が規定人数を` +
+                `${count - config.expected}名超えています。` +
+                "配置はできますが、保存前に確認してください。",
+            });
+          }
+        }
+
+        const universityIds = new Set(
+          session.university_role_member_ids || [],
+        );
+        const bothRoles = (session.high_school_role_member_ids || []).filter(
+          (participantId) => universityIds.has(String(participantId)),
+        );
+        if (bothRoles.length) {
+          issues.push({
+            severity: "error",
+            message:
+              "同じ参加者が大学生役と高校生役の両方に配置されています。",
+          });
+        }
+
+        const sameGroupSlot = sessions.filter(
+          (other) =>
+            other.session_id !== session.session_id &&
+            other.date === session.date &&
+            Number(other.period) === Number(session.period) &&
+            Number(other.group_index) === Number(session.group_index),
+        );
+        if (sameGroupSlot.length) {
+          issues.push({
+            severity: "error",
+            message: "同じ日時・組番号の回が重複しています。",
+          });
+        }
+
+        const allMemberIds = allSessionMemberIds(session);
+        for (const participantId of allMemberIds) {
+          const participant = participantsById[String(participantId)];
+          const name = participant
+            ? String(participant.name)
+            : `ID ${participantId}`;
+          if (!participant) {
+            issues.push({
+              severity: "error",
+              message: `${name}は登録済み参加者に見つかりません。`,
+            });
+            continue;
+          }
+          if (!participant.active || !participant.approved) {
+            issues.push({
+              severity: "warning",
+              message: `${name}さんは現在の日程調整対象外です。`,
+            });
+          }
+          if (!participantCanAttend(participant, session)) {
+            issues.push({
+              severity: "warning",
+              message:
+                `${name}さんはこの日時・開催形式を` +
+                "参加可能として回答していません。",
+            });
+          }
+          if (assignedInOtherGroup(session, participantId)) {
+            issues.push({
+              severity: "error",
+              message: `${name}さんが同じ時限の別の組にも配置されています。`,
+            });
+          }
+          const participationLimit = requiredTotalCount(participant);
+          const participationCount = assignedTotalCount(participantId);
+          if (participationCount > participationLimit) {
+            issues.push({
+              severity: "warning",
+              message:
+                `${name}さんの参加回数が基準値を超えています。` +
+                `現在${participationCount}回、基準値${participationLimit}回、` +
+                `超過${participationCount - participationLimit}回です。`,
+            });
+          }
+        }
+
+        if (
+          Number(session.group_index) < 1 ||
+          Number(session.group_index) >
+            Number(args.max_groups_per_slot || 1)
+        ) {
+          issues.push({
+            severity: "error",
+            message: "組番号が同時開催上限の範囲外です。",
+          });
+        }
+        return uniqueIssues(issues);
+      }
+
+      function allIssues() {
+        const items = [];
+        for (const session of sessions) {
+          for (const issue of sessionIssues(session)) {
+            items.push({
+              ...issue,
+              session_id: session.session_id,
+            });
+          }
+        }
+        return items;
+      }
+
+      function snapshot(label) {
+        return {
+          sessions: deepClone(sessions),
+          session_wide_locks: deepClone(sessionWideLocks),
+          selected_session_id: selectedSessionId,
+          label,
+        };
+      }
+
+      function normalizeCurrentSessions() {
+        sessions = sessions.map(normalizeSession);
+        sessionWideLocks = normalizeSessionWideLocks(
+          sessionWideLocks,
+          sessions,
+        );
+        ensureSelection();
+      }
+
+      function emitValue() {
+        const value = valueFromState();
+        persistValue(value);
+        persistHistory();
+        setComponentValue(value);
+        window.setTimeout(setFrameHeight, 0);
+      }
+
+      function renderAndEmit() {
+        render();
+        emitValue();
+      }
+
+      function mutate(label, callback) {
+        const before = snapshot(label);
+        callback();
+        normalizeCurrentSessions();
+        if (
+          stableSessions(before.sessions) === stableSessions(sessions) &&
+          JSON.stringify(before.session_wide_locks) ===
+            JSON.stringify(sessionWideLocks)
+        ) {
+          return;
+        }
+        undoStack.push(before);
+        undoStack = undoStack.slice(-HISTORY_LIMIT);
+        redoStack = [];
+        lastActionMessage = label;
+        renderAndEmit();
+      }
+
+      function undo() {
+        if (!undoStack.length) {
+          return;
+        }
+        const previous = undoStack.pop();
+        redoStack.push(snapshot(previous.label));
+        redoStack = redoStack.slice(-HISTORY_LIMIT);
+        sessions = previous.sessions.map(normalizeSession);
+        sessionWideLocks = normalizeSessionWideLocks(
+          previous.session_wide_locks,
+          sessions,
+        );
+        selectedSessionId = previous.selected_session_id;
+        detailPanelClosed = !selectedSessionId;
+        ensureSelection();
+        lastActionMessage = `「${previous.label}」を取り消しました`;
+        renderAndEmit();
+      }
+
+      function redo() {
+        if (!redoStack.length) {
+          return;
+        }
+        const next = redoStack.pop();
+        undoStack.push(snapshot(next.label));
+        undoStack = undoStack.slice(-HISTORY_LIMIT);
+        sessions = next.sessions.map(normalizeSession);
+        sessionWideLocks = normalizeSessionWideLocks(
+          next.session_wide_locks,
+          sessions,
+        );
+        selectedSessionId = next.selected_session_id;
+        detailPanelClosed = !selectedSessionId;
+        ensureSelection();
+        lastActionMessage = `「${next.label}」をやり直しました`;
+        renderAndEmit();
+      }
+
+      function resetToInitial() {
+        if (!isDirty()) {
+          return;
+        }
+        if (
+          !window.confirm(
+            "このカレンダーで行った変更をすべて初期状態へ戻しますか？",
+          )
+        ) {
+          return;
+        }
+        mutate("カレンダーを初期状態に戻す", () => {
+          sessions = deepClone(initialSessions);
+          sessionWideLocks = deepClone(initialSessionWideLocks);
+          selectedSessionId = sessions.length
+            ? String(sessions[0].session_id)
+            : "";
+          detailPanelClosed = false;
+        });
+      }
+
+      function selectSession(sessionId) {
+        const cleaned = removeTransientEmptySessions();
+        selectedSessionId = String(sessionId || "");
+        detailPanelClosed = !selectedSessionId;
+        participantPickerOpen = false;
+        participantPickerSessionId = "";
+        participantPickerQuery = "";
+        if (cleaned) {
+          renderAndEmit();
+        } else {
+          persistHistory();
+          render();
+        }
+      }
+
+      function closeDetailPanel() {
+        const cleaned = removeTransientEmptySessions();
+        selectedSessionId = "";
+        detailPanelClosed = true;
+        participantPickerOpen = false;
+        participantPickerSessionId = "";
+        participantPickerQuery = "";
+        if (cleaned) {
+          renderAndEmit();
+        } else {
+          persistHistory();
+          render();
+        }
+      }
+
+      function removeMember(session, field, participantId) {
+        const participant = participantsById[String(participantId)];
+        const name = participant ? participant.name : participantId;
+        mutate(`${name}さんを未割当へ戻す`, () => {
+          session[field] = (session[field] || []).filter(
+            (value) => String(value) !== String(participantId),
+          );
+          const lockedField = lockedFieldForRoleField(field);
+          session[lockedField] = (session[lockedField] || []).filter(
+            (value) => String(value) !== String(participantId),
+          );
+          const roleLockedField = roleLockedFieldForRoleField(field);
+          session[roleLockedField] = (
+            session[roleLockedField] || []
+          ).filter(
+            (value) => String(value) !== String(participantId),
+          );
+          syncSessionLockFlag(session);
+        });
+      }
+
+      function removeParticipant(session, participantId) {
+        const participant = participantsById[String(participantId)];
+        const name = participant ? participant.name : participantId;
+        mutate(`${name}さんを参加者から外す`, () => {
+          removeParticipantFromSession(session, participantId);
+        });
+      }
+
+      function moveMember(session, fromField, toField, participantId) {
+        const reason = moveBlockReason(
+          session,
+          fromField,
+          toField,
+          participantId,
+        );
+        if (reason) {
+          return;
+        }
+        const participant = participantsById[String(participantId)];
+        const name = participant ? participant.name : participantId;
+        const targetLabel =
+          toField === "university_role_member_ids"
+            ? "大学生役"
+            : "高校生役";
+        mutate(`${name}さんを${targetLabel}へ変更`, () => {
+          const fromLockedField = lockedFieldForRoleField(fromField);
+          const toLockedField = lockedFieldForRoleField(toField);
+          const fromRoleLockedField =
+            roleLockedFieldForRoleField(fromField);
+          const toRoleLockedField =
+            roleLockedFieldForRoleField(toField);
+          const wasSlotLocked = (session[fromLockedField] || []).includes(
+            String(participantId),
+          );
+          const wasRoleLocked = (
+            session[fromRoleLockedField] || []
+          ).includes(String(participantId));
+          session[fromField] = (session[fromField] || []).filter(
+            (value) => String(value) !== String(participantId),
+          );
+          session[fromLockedField] = (
+            session[fromLockedField] || []
+          ).filter(
+            (value) => String(value) !== String(participantId),
+          );
+          session[fromRoleLockedField] = (
+            session[fromRoleLockedField] || []
+          ).filter(
+            (value) => String(value) !== String(participantId),
+          );
+          session[toField] = [
+            ...(session[toField] || []),
+            String(participantId),
+          ];
+          if (wasSlotLocked) {
+            session[toLockedField] = uniqueIds([
+              ...(session[toLockedField] || []),
+              String(participantId),
+            ]);
+          }
+          if (wasRoleLocked) {
+            session[toRoleLockedField] = uniqueIds([
+              ...(session[toRoleLockedField] || []),
+              String(participantId),
+            ]);
+          }
+        });
+      }
+
+      function toggleMemberRole(session, participantId, role) {
+        const config = roleConfig(role);
+        const participantKey = String(participantId);
+        if ((session[config.field] || []).includes(participantKey)) {
+          removeMember(session, config.field, participantKey);
+          return;
+        }
+        if ((session[config.otherField] || []).includes(participantKey)) {
+          moveMember(
+            session,
+            config.otherField,
+            config.field,
+            participantKey,
+          );
+          return;
+        }
+        addMember(session, config.field, participantKey);
+      }
+
+      function toggleMemberLock(session, field, participantId) {
+        if (
+          showOptimizationControls() &&
+          isWholeSessionLocked(session)
+        ) {
+          return;
+        }
+        const participant = participantsById[String(participantId)];
+        const name = participant ? participant.name : participantId;
+        const lockedField = lockedFieldForRoleField(field);
+        const isLocked = (session[lockedField] || []).includes(
+          String(participantId),
+        );
+        mutate(
+          `${name}さんの日時維持を${isLocked ? "解除" : "設定"}`,
+          () => {
+            const lockedIds = session[lockedField] || [];
+            if (isLocked) {
+              session[lockedField] = lockedIds.filter(
+                (value) => String(value) !== String(participantId),
+              );
+              const roleLockedField =
+                roleLockedFieldForRoleField(field);
+              session[roleLockedField] = (
+                session[roleLockedField] || []
+              ).filter(
+                (value) => String(value) !== String(participantId),
+              );
+            } else {
+              session[lockedField] = uniqueIds([
+                ...lockedIds,
+                String(participantId),
+              ]);
+            }
+            syncSessionLockFlag(session);
+          },
+        );
+      }
+
+      function toggleMemberRoleLock(session, field, participantId) {
+        const participant = participantsById[String(participantId)];
+        const name = participant ? participant.name : participantId;
+        const roleLockedField = roleLockedFieldForRoleField(field);
+        const slotLockedField = lockedFieldForRoleField(field);
+        const isLocked = (session[roleLockedField] || []).includes(
+          String(participantId),
+        );
+        mutate(
+          `${name}さんの役割指定を${isLocked ? "解除" : "設定"}`,
+          () => {
+            if (isLocked) {
+              session[roleLockedField] = (
+                session[roleLockedField] || []
+              ).filter(
+                (value) => String(value) !== String(participantId),
+              );
+            } else {
+              session[roleLockedField] = uniqueIds([
+                ...(session[roleLockedField] || []),
+                String(participantId),
+              ]);
+              session[slotLockedField] = uniqueIds([
+                ...(session[slotLockedField] || []),
+                String(participantId),
+              ]);
+            }
+            syncSessionLockFlag(session);
+          },
+        );
+      }
+
+      function addMember(session, field, participantId) {
+        const reason = roleAssignmentBlockReason(
+          session,
+          field,
+          participantId,
+        );
+        if (reason) {
+          return;
+        }
+        const participant = participantsById[String(participantId)];
+        const roleLabel =
+          field === "university_role_member_ids"
+            ? "大学生役"
+            : "高校生役";
+        mutate(`${participant.name}さんを${roleLabel}へ割り当て`, () => {
+          session[field] = uniqueIds([
+            ...(session[field] || []),
+            String(participantId),
+          ]);
+          if (isWholeSessionLocked(session)) {
+            const lockedField = lockedFieldForRoleField(field);
+            session[lockedField] = uniqueIds([
+              ...(session[lockedField] || []),
+              String(participantId),
+            ]);
+          }
+          syncSessionLockFlag(session);
+        });
+      }
+
+      function addParticipant(session, participantId) {
+        const reason = participantSelectionBlockReason(
+          session,
+          participantId,
+        );
+        if (reason) {
+          return;
+        }
+        const participant = participantsById[String(participantId)];
+        mutate(`${participant.name}さんを参加者へ追加`, () => {
+          session.participant_member_ids = uniqueIds([
+            ...(session.participant_member_ids || []),
+            String(participantId),
+          ]);
+        });
+      }
+
+      function setMeetingMode(session, meetingMode) {
+        if (session.meeting_mode === meetingMode) {
+          return;
+        }
+        const label = meetingMode === "zoom" ? "Zoom" : "対面";
+        mutate(`開催形式を${label}へ変更`, () => {
+          session.meeting_mode = meetingMode;
+        });
+      }
+
+      function toggleSessionLock(session) {
+        const willLock = !isWholeSessionLocked(session);
+        mutate(
+          `コマを${willLock ? "固定" : "自由"}にする`,
+          () => {
+            sessionWideLocks[String(session.session_id)] = willLock;
+            session.lock_session_wide = willLock;
+            if (willLock) {
+              session.locked_participant_member_ids = [
+                ...allSessionMemberIds(session),
+              ];
+            } else {
+              session.locked_participant_member_ids = [];
+            }
+            syncSessionLockFlag(session);
+          },
+        );
+      }
+
+      function deleteSession(session) {
+        if (
+          !window.confirm(
+            `${session.date} ${session.period}限 組${session.group_index}` +
+              "を削除しますか？取り消し操作で元に戻せます。",
+          )
+        ) {
+          return;
+        }
+        mutate(
+          `${session.date} ${session.period}限 組${session.group_index}を削除`,
+          () => {
+            const index = sessions.findIndex(
+              (candidate) =>
+                candidate.session_id === session.session_id,
+            );
+            sessions = sessions.filter(
+              (candidate) =>
+                candidate.session_id !== session.session_id,
+            );
+            delete sessionWideLocks[String(session.session_id)];
+            const fallback =
+              sessions[Math.min(Math.max(index, 0), sessions.length - 1)];
+            selectedSessionId = fallback
+              ? String(fallback.session_id)
+              : "";
+            detailPanelClosed = !selectedSessionId;
+          },
+        );
+      }
+
+      function addSession(day, period) {
+        removeTransientEmptySessions();
+        const usedGroups = new Set(
+          sessions
+            .filter(
+              (session) =>
+                session.date === day &&
+                Number(session.period) === Number(period),
+            )
+            .map((session) => Number(session.group_index)),
+        );
+        let groupIndex = 1;
+        while (usedGroups.has(groupIndex)) {
+          groupIndex += 1;
+        }
+        if (groupIndex > Number(args.max_groups_per_slot || 1)) {
+          return;
+        }
+        mutate(`${day} ${period}限に組${groupIndex}を追加`, () => {
+          const session = normalizeSession({
+            date: day,
+            period,
+            group_index: groupIndex,
+            meeting_mode: "in_person",
+            lock_session: showOptimizationControls(),
+            lock_session_wide: showOptimizationControls(),
+            lock_meeting_mode: false,
+            university_role_member_ids: [],
+            high_school_role_member_ids: [],
+            participant_member_ids: [],
+            locked_participant_member_ids: [],
+            locked_university_role_member_ids: [],
+            locked_high_school_role_member_ids: [],
+            role_locked_university_role_member_ids: [],
+            role_locked_high_school_role_member_ids: [],
+          });
+          sessionWideLocks[String(session.session_id)] =
+            showOptimizationControls();
+          sessions.push(session);
+          selectedSessionId = String(session.session_id);
+          detailPanelClosed = false;
+        });
+      }
+
+      function setAllLocks(locked) {
+        mutate(
+          locked ? "全参加者のコマを固定" : "全固定を解除",
+          () => {
+            for (const session of sessions) {
+              sessionWideLocks[String(session.session_id)] = locked;
+              session.lock_session_wide = locked;
+              session.lock_meeting_mode = false;
+              session.locked_participant_member_ids = locked
+                ? [...allSessionMemberIds(session)]
+                : [];
+              if (!locked) {
+                session.role_locked_university_role_member_ids = [];
+                session.role_locked_high_school_role_member_ids = [];
+              }
+              syncSessionLockFlag(session);
+            }
+          },
+        );
+      }
+
+      function buttonWithText(text, className = "") {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = className;
+        button.textContent = text;
+        return button;
+      }
+
+      function participantName(participantId) {
+        const participant = participantsById[String(participantId)];
+        return participant
+          ? String(participant.name)
+          : `不明: ${participantId}`;
+      }
+
+      function appendSummaryNames(container, memberIds, countText = null) {
+        if (countText !== null) {
+          const count = document.createElement("span");
+          count.className = "summary-count";
+          count.textContent = countText;
+          container.appendChild(count);
+        }
+        if ((memberIds || []).length) {
+          const list = document.createElement("span");
+          list.className = "summary-name-list";
+          list.textContent = memberIds
+            .map((participantId) => participantName(participantId))
+            .join("、");
+          container.appendChild(list);
+        } else if (countText !== null) {
+          const empty = document.createElement("span");
+          empty.className = "summary-name-list";
+          empty.textContent = "未設定";
+          container.appendChild(empty);
+        }
+      }
+
+      function createSessionSummary(session) {
+        const issues = sessionIssues(session);
+        const hasError = issues.some(
+          (issue) => issue.severity === "error",
+        );
+        const summary = buttonWithText("", "session-summary");
+        if (session.session_id === selectedSessionId) {
+          summary.classList.add("selected");
+        }
+        if (issues.length) {
+          summary.classList.add(hasError ? "has-error" : "has-warning");
+        }
+        summary.setAttribute(
+          "aria-pressed",
+          session.session_id === selectedSessionId ? "true" : "false",
+        );
+        summary.title =
+          "役割・参加者を編集する組を選択すると詳細編集が表示されます";
+        summary.addEventListener("click", () =>
+          selectSession(session.session_id),
+        );
+
+        const header = document.createElement("span");
+        header.className = "summary-header";
+        const mode = document.createElement("span");
+        mode.className = `badge mode ${
+          session.meeting_mode === "zoom" ? "zoom" : "in-person"
+        }`;
+        mode.textContent =
+          session.meeting_mode === "zoom" ? "Zoom" : "対面";
+        header.appendChild(mode);
+        if (issues.length) {
+          const issueBadge = document.createElement("span");
+          issueBadge.className = `badge ${
+            hasError ? "error" : "warning"
+          }`;
+          issueBadge.textContent = `${issues.length}件`;
+          header.appendChild(issueBadge);
+        }
+        summary.appendChild(header);
+
+        const addSummaryRole = (label, className, memberIds, expected) => {
+          const line = document.createElement("span");
+          line.className = "summary-role";
+          const mark = document.createElement("span");
+          mark.className = `role-mark ${className}`;
+          mark.textContent = label;
+          line.appendChild(mark);
+          const names = document.createElement("span");
+          names.className = "summary-names";
+          appendSummaryNames(
+            names,
+            memberIds,
+            expected === null
+              ? null
+              : `${memberIds.length}/${expected}`,
+          );
+          if (memberIds.length || expected !== null) {
+            line.appendChild(names);
+          }
+          summary.appendChild(line);
+        };
+        addSummaryRole(
+          "未",
+          "unassigned",
+          unassignedMemberIds(session),
+          null,
+        );
+        for (const role of ["university", "high_school"]) {
+          const config = roleConfig(role);
+          const memberIds = session[config.field] || [];
+          addSummaryRole(
+            role === "university" ? "大" : "高",
+            config.className,
+            memberIds,
+            config.expected,
+          );
+        }
+        return summary;
+      }
+
+      function createSlotCell(day, period) {
+        const cell = document.createElement("td");
+        cell.className = "slot-cell";
+        if (isExcludedDay(day)) {
+          cell.classList.add("excluded");
+        }
+        if (calendarViewMode === "availability") {
+          cell.classList.add("availability-mode");
+        }
+        const slotSessions = sessions
+          .filter(
+            (session) =>
+              session.date === day &&
+              Number(session.period) === Number(period),
+          )
+          .sort(
+            (left, right) =>
+              Number(left.group_index) - Number(right.group_index),
+          );
+        if (calendarViewMode !== "availability") {
+          for (const session of slotSessions) {
+            cell.appendChild(createSessionSummary(session));
+          }
+        }
+        if (
+          calendarViewMode !== "availability" &&
+          !isExcludedDay(day) &&
+          slotSessions.length < Number(args.max_groups_per_slot || 1)
+        ) {
+          const add = buttonWithText("＋", "add-session");
+          add.title = `${day} ${period}限に組を追加`;
+          add.setAttribute(
+            "aria-label",
+            `${day} ${period}限に組を追加`,
+          );
+          add.addEventListener("click", () => addSession(day, period));
+          cell.appendChild(add);
+        }
+        if (calendarViewMode === "availability") {
+          cell.appendChild(createAvailabilityPreview(day, period));
+        }
+        return cell;
+      }
+
+      function createCalendarViewTools() {
+        const tools = document.createElement("div");
+        tools.className = "pane-tools";
+        for (const [mode, label, title] of [
+          ["summary", "概要", "日時・組の概要を表示"],
+          ["availability", "参加可能者", "各日時の参加可能な人を表示"],
+        ]) {
+          const toggle = buttonWithText(label, "view-toggle");
+          toggle.classList.toggle("active", calendarViewMode === mode);
+          toggle.setAttribute(
+            "aria-pressed",
+            calendarViewMode === mode ? "true" : "false",
+          );
+          toggle.title = title;
+          toggle.addEventListener("click", () => setCalendarViewMode(mode));
+          tools.appendChild(toggle);
+        }
+        return tools;
+      }
+
+      function createCalendarPane() {
+        const pane = document.createElement("section");
+        pane.className = "overview-pane";
+        const heading = document.createElement("div");
+        heading.className = "pane-heading";
+        const headingText = document.createElement("div");
+        const title = document.createElement("h3");
+        title.textContent = "カレンダー全体";
+        headingText.appendChild(title);
+        const descriptionText =
+          calendarViewMode === "availability"
+            ? ""
+            : currentSession()
+            ? "日時と組の配置を確認し、選択中の組を詳細編集します。"
+            : "組を選択すると、詳細編集が表示されます。";
+        if (descriptionText) {
+          const description = document.createElement("p");
+          description.textContent = descriptionText;
+          headingText.appendChild(description);
+        }
+        heading.appendChild(headingText);
+        heading.appendChild(createCalendarViewTools());
+        pane.appendChild(heading);
+
+        const wrap = document.createElement("div");
+        wrap.className = "calendar-wrap";
+        const table = document.createElement("table");
+        table.className =
+          calendarViewMode === "availability" ? "availability-calendar" : "";
+        const thead = document.createElement("thead");
+        const headRow = document.createElement("tr");
+        const dateHead = document.createElement("th");
+        dateHead.className = "date-column";
+        dateHead.textContent = "日付";
+        headRow.appendChild(dateHead);
+        for (const period of args.periods || []) {
+          const head = document.createElement("th");
+          head.textContent = `${period}限`;
+          headRow.appendChild(head);
+        }
+        thead.appendChild(headRow);
+        table.appendChild(thead);
+
+        const tbody = document.createElement("tbody");
+        for (const day of args.days || []) {
+          const row = document.createElement("tr");
+          const dateCell = document.createElement("td");
+          dateCell.className = `date-column ${day.day_type || ""}${
+            day.excluded ? " excluded" : ""
+          }`;
+          dateCell.textContent = day.label;
+          if (day.excluded) {
+            dateCell.title = "新しい組を追加できない除外日";
+          }
+          row.appendChild(dateCell);
+          for (const period of args.periods || []) {
+            row.appendChild(createSlotCell(day.iso, Number(period)));
+          }
+          tbody.appendChild(row);
+        }
+        table.appendChild(tbody);
+        wrap.appendChild(table);
+        pane.appendChild(wrap);
+        return pane;
+      }
+
+      function createIssueList(session) {
+        const issues = sessionIssues(session);
+        if (!issues.length) {
+          return document.createDocumentFragment();
+        }
+        const list = document.createElement("ul");
+        list.className = "issue-list";
+        for (const issue of issues) {
+          const item = document.createElement("li");
+          item.className = `issue-item ${
+            issue.severity === "error" ? "error" : ""
+          }`;
+          item.textContent =
+            `${issue.severity === "error" ? "要修正" : "確認"}: ` +
+            issue.message;
+          list.appendChild(item);
+        }
+        return list;
+      }
+
+      function createMemberRow(session, participantId, role) {
+        const config = roleConfig(role);
+        const participant = participantsById[String(participantId)];
+        const wholeSessionLocked = isWholeSessionLocked(session);
+        const isLocked = (session[config.lockedField] || []).includes(
+          String(participantId),
+        );
+        const canAttend = participantCanAttend(participant, session);
+        const row = document.createElement("div");
+        row.className = `member-row${canAttend ? "" : " unavailable"}`;
+
+        const identity = document.createElement("div");
+        identity.className = "member-name-wrap";
+        const name = document.createElement("span");
+        name.className = "member-name";
+        name.textContent = participantName(participantId);
+        identity.appendChild(name);
+        const note = document.createElement("span");
+        note.className = `member-note${canAttend ? "" : " warning"}`;
+        note.textContent = canAttend
+          ? !showOptimizationControls() || !showDateLockControls()
+            ? "参加可能回答内"
+            : wholeSessionLocked
+            ? "日時維持"
+            : isLocked
+            ? "日時維持"
+            : "役割指定済み・日時自由"
+          : "参加可能回答外";
+        identity.appendChild(note);
+        row.appendChild(identity);
+
+        const actions = document.createElement("div");
+        actions.className = "member-actions";
+        const lock = buttonWithText("", "chip-action");
+        lock.textContent = wholeSessionLocked
+          ? "🔒日時維持"
+          : isLocked
+          ? "🔒日時維持"
+          : "🔓日時自由";
+        lock.classList.toggle("locked", isLocked);
+        lock.disabled = wholeSessionLocked;
+        lock.title = wholeSessionLocked
+          ? "このコマは日時維持中"
+          : isLocked
+          ? "日時維持を解除"
+          : "この参加者の日時を維持";
+        lock.addEventListener("click", () =>
+          toggleMemberLock(
+            session,
+            config.field,
+            participantId,
+          ),
+        );
+        if (showDateLockControls()) {
+          actions.appendChild(lock);
+        }
+
+        const moveReason = moveBlockReason(
+          session,
+          config.field,
+          config.otherField,
+          participantId,
+        );
+        const move = buttonWithText("", "chip-action");
+        move.textContent = "⇄役割";
+        move.title = moveReason || "1クリックで役割を変更";
+        move.disabled = Boolean(moveReason);
+        move.setAttribute(
+          "aria-label",
+          `${participantName(participantId)}さんを${config.otherLabel}へ変更`,
+        );
+        move.addEventListener("click", () =>
+          moveMember(
+            session,
+            config.field,
+            config.otherField,
+            participantId,
+          ),
+        );
+        actions.appendChild(move);
+
+        const remove = buttonWithText("", "chip-action danger");
+        remove.textContent = "×外す";
+        remove.title = "役割から外し、未割当の参加者へ戻す";
+        remove.addEventListener("click", () =>
+          removeMember(session, config.field, participantId),
+        );
+        actions.appendChild(remove);
+        row.appendChild(actions);
+        return row;
+      }
+
+      function createUnassignedParticipantRow(session, participantId) {
+        const participant = participantsById[String(participantId)];
+        const canAttend = participantCanAttend(participant, session);
+        const kinds = participantAttendanceKinds(
+          participant,
+          session.date,
+          session.period,
+        );
+        const row = document.createElement("div");
+        row.className = `member-row participant-row${
+          canAttend ? "" : " unavailable"
+        }`;
+
+        const identity = document.createElement("div");
+        identity.className = "member-name-wrap";
+        const name = document.createElement("span");
+        name.className = "member-name";
+        name.textContent = participantName(participantId);
+        identity.appendChild(name);
+        const note = document.createElement("span");
+        note.className = `member-note${canAttend ? "" : " warning"}`;
+        note.textContent = canAttend
+          ? `参加可能（${kinds.join("・")}）`
+          : "参加可能回答外";
+        identity.appendChild(note);
+        row.appendChild(identity);
+
+        const actions = document.createElement("div");
+        actions.className = "member-actions";
+        for (const role of ["university", "high_school"]) {
+          const config = roleConfig(role);
+          const assign = buttonWithText(config.label, "chip-action role-assign");
+          const reason = roleAssignmentBlockReason(
+            session,
+            config.field,
+            participantId,
+          );
+          assign.disabled = Boolean(reason);
+          assign.title = reason || `${config.label}へ割り当て`;
+          assign.addEventListener("click", () =>
+            addMember(session, config.field, participantId),
+          );
+          actions.appendChild(assign);
+        }
+        const remove = buttonWithText("×外す", "chip-action danger");
+        remove.title = "このコマの参加者から外す";
+        remove.addEventListener("click", () =>
+          removeParticipant(session, participantId),
+        );
+        actions.appendChild(remove);
+        row.appendChild(actions);
+        return row;
+      }
+
+      function createParticipantPicker(session) {
+        const details = document.createElement("details");
+        details.className = "participant-picker";
+        const pickerSessionId = String(session.session_id);
+        const restoreOpen =
+          participantPickerOpen &&
+          participantPickerSessionId === pickerSessionId;
+        const summary = document.createElement("summary");
+        summary.textContent = "＋ 追加できる参加者";
+        details.appendChild(summary);
+        const body = document.createElement("div");
+        body.className = "picker-body";
+        const search = document.createElement("input");
+        search.type = "search";
+        search.className = "participant-search";
+        search.placeholder = "名前で検索";
+        search.setAttribute(
+          "aria-label",
+          "このコマへ追加する参加者を検索",
+        );
+        if (restoreOpen) {
+          search.value = participantPickerQuery;
+        }
+        body.appendChild(search);
+        const options = document.createElement("div");
+        options.className = "participant-options";
+        body.appendChild(options);
+        details.appendChild(body);
+
+        const participants = Object.values(participantsById)
+          .filter(
+            (participant) =>
+              !participantSelectionBlockReason(session, participant.id),
+          )
+          .sort((left, right) =>
+            String(left.name).localeCompare(String(right.name), "ja"),
+          );
+        const renderOptions = () => {
+          const query = String(search.value || "")
+            .trim()
+            .toLocaleLowerCase("ja");
+          options.replaceChildren();
+          const visible = participants.filter((participant) =>
+            String(participant.name)
+              .toLocaleLowerCase("ja")
+              .includes(query),
+          );
+          if (!visible.length) {
+            const empty = document.createElement("p");
+            empty.className = "empty-message";
+            empty.textContent = query
+              ? "検索条件に一致する追加可能な参加者はいません。"
+              : "この日時・開催形式で追加できる参加者はいません。";
+            options.appendChild(empty);
+            return;
+          }
+          for (const participant of visible) {
+            const option = document.createElement("div");
+            option.className = "participant-option";
+            const text = document.createElement("div");
+            const name = document.createElement("span");
+            name.className = "participant-option-name";
+            name.textContent = String(participant.name);
+            text.appendChild(name);
+            const reason = document.createElement("span");
+            reason.className = "participant-option-reason available";
+            reason.textContent = `参加可能：${participantAttendanceKinds(
+              participant,
+              session.date,
+              session.period,
+            ).join("・")}`;
+            text.appendChild(reason);
+            option.appendChild(text);
+            const add = buttonWithText("＋追加");
+            add.title = "このコマの参加者へ追加";
+            add.addEventListener("click", () =>
+              addParticipant(session, participant.id),
+            );
+            option.appendChild(add);
+            options.appendChild(option);
+          }
+        };
+        search.addEventListener("input", () => {
+          participantPickerQuery = search.value;
+          renderOptions();
+        });
+        details.addEventListener("toggle", () => {
+          if (details.open) {
+            participantPickerOpen = true;
+            participantPickerSessionId = pickerSessionId;
+            participantPickerQuery = search.value;
+            renderOptions();
+            window.setTimeout(setFrameHeight, 0);
+          } else if (participantPickerSessionId === pickerSessionId) {
+            participantPickerOpen = false;
+            participantPickerSessionId = "";
+            participantPickerQuery = "";
+          }
+        });
+        if (restoreOpen) {
+          details.open = true;
+          renderOptions();
+        }
+        return details;
+      }
+
+      function createParticipantRoleRow(session, participantId) {
+        const participant = participantsById[String(participantId)];
+        const canAttend = participantCanAttend(participant, session);
+        const kinds = participantAttendanceKinds(
+          participant,
+          session.date,
+          session.period,
+        );
+        const universityAssigned = (
+          session.university_role_member_ids || []
+        ).includes(String(participantId));
+        const highSchoolAssigned = (
+          session.high_school_role_member_ids || []
+        ).includes(String(participantId));
+        const assignedLabel = universityAssigned
+          ? "大学生役"
+          : highSchoolAssigned
+          ? "高校生役"
+          : "役割未指定";
+        const row = document.createElement("div");
+        row.className = `member-row${canAttend ? "" : " unavailable"}`;
+
+        const identity = document.createElement("div");
+        identity.className = "member-name-wrap";
+        const nameLine = document.createElement("div");
+        nameLine.className = "member-name-line";
+        const name = document.createElement("span");
+        name.className = "member-name";
+        name.textContent = participantName(participantId);
+        nameLine.appendChild(name);
+        const previousRole = (
+          session.display_university_role_member_ids || []
+        ).includes(String(participantId))
+          ? "大"
+          : (
+              session.display_high_school_role_member_ids || []
+            ).includes(String(participantId))
+          ? "高"
+          : "";
+        if (previousRole) {
+          const previousBadge = document.createElement("span");
+          previousBadge.className = "previous-role-badge";
+          previousBadge.textContent = `前:${previousRole}`;
+          nameLine.appendChild(previousBadge);
+        }
+        identity.appendChild(nameLine);
+        const note = document.createElement("span");
+        note.className = `member-note${canAttend ? "" : " warning"}`;
+        note.textContent = canAttend
+          ? `${assignedLabel}・参加可能（${kinds.join("・")}）`
+          : `${assignedLabel}・参加可能回答外`;
+        identity.appendChild(note);
+        row.appendChild(identity);
+
+        const actions = document.createElement("div");
+        actions.className = "member-actions";
+        const roleActions = document.createElement("div");
+        roleActions.className = "member-role-actions";
+        for (const role of ["high_school", "university"]) {
+          const config = roleConfig(role);
+          const active = (session[config.field] || []).includes(
+            String(participantId),
+          );
+          const roleButton = buttonWithText(
+            config.label,
+            "member-role-toggle",
+          );
+          roleButton.classList.toggle("active", active);
+          roleButton.setAttribute("aria-pressed", active ? "true" : "false");
+          roleButton.setAttribute(
+            "aria-label",
+            active
+              ? `${participantName(participantId)}さんの${config.label}を解除`
+              : `${participantName(participantId)}さんを${config.label}に指定`,
+          );
+          roleButton.title = active
+            ? `${config.label}を解除`
+            : `${config.label}に指定`;
+          roleButton.addEventListener("click", () =>
+            toggleMemberRole(session, participantId, role),
+          );
+          roleActions.appendChild(roleButton);
+        }
+        actions.appendChild(roleActions);
+
+        const isLocked = (
+          session.locked_participant_member_ids || []
+        ).includes(String(participantId));
+        const wholeSessionLocked = isWholeSessionLocked(session);
+        if (showDateLockControls()) {
+          const lock = buttonWithText("", "chip-action");
+          lock.textContent = wholeSessionLocked || isLocked
+          ? "🔒日時維持"
+          : "🔓日時自由";
+          lock.classList.toggle("locked", isLocked || wholeSessionLocked);
+          lock.disabled = wholeSessionLocked;
+          lock.title = wholeSessionLocked
+          ? "このコマは日時維持中"
+          : isLocked
+          ? "日時維持を解除"
+          : "この参加者の日時を維持";
+          lock.addEventListener("click", () =>
+            toggleMemberLock(
+              session,
+              "university_role_member_ids",
+              participantId,
+            ),
+          );
+          actions.appendChild(lock);
+        }
+
+        const remove = buttonWithText("×外す", "chip-action danger");
+        remove.title = "このコマの参加者から外す";
+        remove.addEventListener("click", () =>
+          removeParticipant(session, participantId),
+        );
+        actions.appendChild(remove);
+        row.appendChild(actions);
+        return row;
+      }
+
+      function createParticipantRoleBlock(session) {
+        const memberIds = allSessionMemberIds(session);
+        const block = document.createElement("section");
+        block.className = "role-block participant-block";
+        const title = document.createElement("div");
+        title.className = "role-title";
+        const label = document.createElement("span");
+        label.textContent = "参加者と役割";
+        title.appendChild(label);
+        const count = document.createElement("span");
+        count.textContent = `${allSessionMemberIds(session).length}名`;
+        title.appendChild(count);
+        block.appendChild(title);
+
+        const list = document.createElement("div");
+        list.className = "member-list";
+        if (!memberIds.length) {
+          const empty = document.createElement("p");
+          empty.className = "empty-message";
+          empty.textContent = "下の一覧から、このコマに参加する人を選びます。";
+          list.appendChild(empty);
+        } else {
+          for (const participantId of memberIds) {
+            list.appendChild(createParticipantRoleRow(session, participantId));
+          }
+        }
+        block.appendChild(list);
+        block.appendChild(createParticipantPicker(session));
+        return block;
+      }
+
+      function createDetailPanel() {
+        const panel = document.createElement("aside");
+        panel.className = "detail-panel";
+        const session = currentSession();
+        const heading = document.createElement("div");
+        heading.className = "pane-heading";
+        const headingText = document.createElement("div");
+        const title = document.createElement("h3");
+        title.textContent = "選択中の組を編集";
+        headingText.appendChild(title);
+        const description = document.createElement("p");
+        description.textContent = session
+          ? `${session.date}・${session.period}限・組${session.group_index}`
+          : "カレンダーから組を選択してください。";
+        headingText.appendChild(description);
+        heading.appendChild(headingText);
+        if (session) {
+          const headingActions = document.createElement("div");
+          headingActions.className = "detail-heading-actions";
+          const selected = document.createElement("span");
+          selected.className = "status-pill selected";
+          selected.textContent = "選択中";
+          headingActions.appendChild(selected);
+          const close = buttonWithText("閉じる", "detail-close");
+          close.title = "詳細編集を閉じる";
+          close.setAttribute("aria-label", "詳細編集を閉じる");
+          close.addEventListener("click", closeDetailPanel);
+          headingActions.appendChild(close);
+          heading.appendChild(headingActions);
+        }
+        panel.appendChild(heading);
+
+        if (!session) {
+          const empty = document.createElement("div");
+          empty.className = "empty-detail";
+          empty.textContent =
+            "組がまだありません。\n" +
+            "各日時にある「＋」から作成してください。";
+          panel.appendChild(empty);
+          return panel;
+        }
+
+        const body = document.createElement("div");
+        body.className = "detail-body";
+
+        const issuesSection = document.createElement("section");
+        issuesSection.className = "detail-section";
+        const issuesHeading = document.createElement("div");
+        issuesHeading.className = "section-heading";
+        const issuesTitle = document.createElement("h4");
+        issuesTitle.textContent = "警告・確認事項";
+        issuesHeading.appendChild(issuesTitle);
+        const issues = sessionIssues(session);
+        const issueBadge = document.createElement("span");
+        issueBadge.className = `status-pill ${
+          issues.some((issue) => issue.severity === "error")
+            ? "error"
+            : issues.length
+            ? "warning"
+            : ""
+        }`;
+        issueBadge.textContent = issues.length
+          ? `${issues.length}件`
+          : "問題なし";
+        issuesHeading.appendChild(issueBadge);
+        issuesSection.appendChild(issuesHeading);
+        issuesSection.appendChild(createIssueList(session));
+        body.appendChild(issuesSection);
+
+        const modeSection = document.createElement("section");
+        modeSection.className = "detail-section";
+        const modeHeading = document.createElement("div");
+        modeHeading.className = "section-heading";
+        const modeTitle = document.createElement("h4");
+        modeTitle.textContent = "開催形式（対面・Zoom）";
+        modeHeading.appendChild(modeTitle);
+        modeSection.appendChild(modeHeading);
+        const modeActions = document.createElement("div");
+        modeActions.className = "mode-actions";
+        for (const [value, label] of [
+          ["in_person", "対面"],
+          ["zoom", "Zoom"],
+        ]) {
+          const mode = buttonWithText(label, "mode-button");
+          const active = session.meeting_mode === value;
+          mode.classList.toggle("active", active);
+          mode.setAttribute("aria-pressed", active ? "true" : "false");
+          mode.addEventListener("click", () =>
+            setMeetingMode(session, value),
+          );
+          modeActions.appendChild(mode);
+        }
+        modeSection.appendChild(modeActions);
+        body.appendChild(modeSection);
+
+        const lockSection = document.createElement("section");
+        lockSection.className = "detail-section";
+        const lockHeading = document.createElement("div");
+        lockHeading.className = "section-heading";
+        const lockTitle = document.createElement("h4");
+        lockTitle.textContent = "探索で守るもの";
+        lockHeading.appendChild(lockTitle);
+        lockSection.appendChild(lockHeading);
+        const lockActions = document.createElement("div");
+        lockActions.className = "lock-actions";
+        const sessionLock = buttonWithText("", "lock-toggle");
+        const wholeSessionLocked = isWholeSessionLocked(session);
+        sessionLock.classList.toggle("locked", wholeSessionLocked);
+        sessionLock.textContent = wholeSessionLocked
+          ? "🔒日時維持"
+          : "🔓日時自由";
+        sessionLock.title = wholeSessionLocked
+          ? "日時維持を個別設定に戻す"
+          : "このコマの日時を探索でも維持";
+        sessionLock.addEventListener("click", () =>
+          toggleSessionLock(session),
+        );
+        lockActions.appendChild(sessionLock);
+        lockSection.appendChild(lockActions);
+        if (showDateLockControls()) {
+          body.appendChild(lockSection);
+        }
+
+        const rolesSection = document.createElement("section");
+        rolesSection.className = "detail-section";
+        const rolesHeading = document.createElement("div");
+        rolesHeading.className = "section-heading";
+        const rolesTitle = document.createElement("h4");
+        rolesTitle.textContent = "参加者と役割";
+        rolesHeading.appendChild(rolesTitle);
+        rolesSection.appendChild(rolesHeading);
+        rolesSection.appendChild(createParticipantRoleBlock(session));
+        body.appendChild(rolesSection);
+
+        const deleteSection = document.createElement("section");
+        deleteSection.className = "detail-section";
+        const remove = buttonWithText(
+          "この組を削除",
+          "delete-session danger",
+        );
+        remove.addEventListener("click", () =>
+          deleteSession(session),
+        );
+        deleteSection.appendChild(remove);
+        body.appendChild(deleteSection);
+        panel.appendChild(body);
+        return panel;
+      }
+
+      function createToolbar() {
+        const toolbar = document.createElement("div");
+        toolbar.className = "toolbar";
+        const historyActions = document.createElement("div");
+        historyActions.className = "toolbar-group";
+        const undoButton = buttonWithText("↶ 取り消す");
+        undoButton.disabled = !undoStack.length;
+        undoButton.title = undoStack.length
+          ? `「${undoStack[undoStack.length - 1].label}」を取り消す`
+          : "取り消せる操作はありません";
+        undoButton.addEventListener("click", undo);
+        historyActions.appendChild(undoButton);
+        const redoButton = buttonWithText("↷ やり直す");
+        redoButton.disabled = !redoStack.length;
+        redoButton.title = redoStack.length
+          ? `「${redoStack[redoStack.length - 1].label}」をやり直す`
+          : "やり直せる操作はありません";
+        redoButton.addEventListener("click", redo);
+        historyActions.appendChild(redoButton);
+        const resetButton = buttonWithText("初期状態に戻す");
+        resetButton.disabled = !isDirty();
+        resetButton.addEventListener("click", resetToInitial);
+        historyActions.appendChild(resetButton);
+        toolbar.appendChild(historyActions);
+
+        const lockActions = document.createElement("div");
+        lockActions.className = "toolbar-group";
+        const lockAll = buttonWithText("全コマを固定");
+        lockAll.title =
+          "現在の日時を探索でも維持";
+        lockAll.addEventListener("click", () => setAllLocks(true));
+        lockActions.appendChild(lockAll);
+        const unlockAll = buttonWithText("固定を解除");
+        unlockAll.title =
+          "日時・役割を探索に任せる";
+        unlockAll.addEventListener("click", () => setAllLocks(false));
+        lockActions.appendChild(unlockAll);
+        if (showDateLockControls() && calendarViewMode !== "availability") {
+          toolbar.appendChild(lockActions);
+        }
+
+        const spacer = document.createElement("span");
+        spacer.className = "toolbar-spacer";
+        toolbar.appendChild(spacer);
+
+        const dirty = document.createElement("span");
+        dirty.className = `status-pill${isDirty() ? " dirty" : ""}`;
+        dirty.textContent = isDirty()
+          ? `変更中${undoStack.length ? `（${undoStack.length}操作）` : ""}`
+          : "変更なし";
+        if (lastActionMessage) {
+          dirty.title = lastActionMessage;
+        }
+        toolbar.appendChild(dirty);
+
+        const session = currentSession();
+        if (session && calendarViewMode !== "availability") {
+          const selected = document.createElement("span");
+          selected.className = "status-pill selected";
+          selected.textContent =
+            `選択中: ${session.date} ${session.period}限 組` +
+            session.group_index;
+          toolbar.appendChild(selected);
+        }
+
+        const issues = allIssues();
+        const warning = document.createElement("span");
+        const hasError = issues.some(
+          (issue) => issue.severity === "error",
+        );
+        warning.className = `status-pill ${
+          hasError ? "error" : issues.length ? "warning" : ""
+        }`;
+        warning.textContent = issues.length
+          ? `警告・要修正 ${issues.length}件`
+          : "画面上の警告なし";
+        toolbar.appendChild(warning);
+        return toolbar;
+      }
+
+      function captureScrollPositions(root) {
+        const calendar = root.querySelector(".calendar-wrap");
+        if (calendar) {
+          calendarScrollPosition = {
+            left: calendar.scrollLeft,
+            top: calendar.scrollTop,
+          };
+        }
+        const detail = root.querySelector(".detail-panel");
+        if (detail) {
+          detailScrollTop = detail.scrollTop;
+        }
+        const participantPicker = root.querySelector(
+          ".participant-picker",
+        );
+        if (participantPicker) {
+          participantPickerOpen = participantPicker.open;
+          participantPickerSessionId = selectedSessionId;
+          const search = participantPicker.querySelector(
+            ".participant-search",
+          );
+          participantPickerQuery = search ? search.value : "";
+        }
+      }
+
+      function restoreScrollPositions(root) {
+        const restore = () => {
+          const calendar = root.querySelector(".calendar-wrap");
+          if (calendar) {
+            calendar.scrollLeft = calendarScrollPosition.left;
+            calendar.scrollTop = calendarScrollPosition.top;
+          }
+          const detail = root.querySelector(".detail-panel");
+          if (detail) {
+            detail.scrollTop = detailScrollTop;
+          }
+        };
+        restore();
+        window.requestAnimationFrame(restore);
+      }
+
+      function render() {
+        const root = document.getElementById("root");
+        captureScrollPositions(root);
+        root.replaceChildren();
+        const guide = document.createElement("div");
+        guide.className = "operation-guide";
+        const guideTitle = document.createElement("strong");
+        guideTitle.textContent = "カレンダー操作";
+        guide.appendChild(guideTitle);
+        const guideSteps = document.createElement("span");
+        guideSteps.textContent =
+          calendarViewMode === "availability"
+            ? "参加可能者: 名前で参加・離脱。大／高で役割を指定。形式は自動。"
+            : showOptimizationControls() && !showDateLockControls()
+            ? "指定した参加者を指定した日時の組に追加します。"
+            : showOptimizationControls()
+            ? "概要: 参加者を選び、役割・形式を指定します。"
+            : "概要: 参加者を選び、役割・形式を指定します。";
+        guide.appendChild(guideSteps);
+        const guideNote = document.createElement("small");
+        guideNote.textContent =
+          calendarViewMode === "availability"
+            ? "黄色＝参加 / 白＝未指定 / 水色＝指定。"
+            : showOptimizationControls() && !showDateLockControls()
+            ? "指定した参加者・日時を固定して探索します。役割は指定すると固定されますが、指定しなくても探索できます。"
+            : showOptimizationControls()
+            ? "白＝未指定 / 水色＝指定 / 日時維持＝そのコマを残す。"
+            : "白＝未指定 / 水色＝指定。";
+        guide.appendChild(guideNote);
+        root.appendChild(guide);
+        root.appendChild(createToolbar());
+
+        const layout = document.createElement("div");
+        layout.className = `editor-layout${
+          currentSession() && calendarViewMode !== "availability"
+            ? " has-detail"
+            : ""
+        }`;
+        layout.appendChild(createCalendarPane());
+        if (currentSession() && calendarViewMode !== "availability") {
+          layout.appendChild(createDetailPanel());
+        }
+        root.appendChild(layout);
+        restoreScrollPositions(root);
+        window.setTimeout(setFrameHeight, 0);
+      }
+
+      window.addEventListener("message", (event) => {
+        if (!event.data || event.data.type !== "streamlit:render") {
+          return;
+        }
+        initializeState(event.data.args || {});
+        render();
+      });
+
+      setComponentReady();
+      observeFrameHeight();
+    </script>
+  </body>
+</html>

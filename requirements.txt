@@ -1,0 +1,7 @@
+streamlit==1.58.0
+GitPython>=3.1.58
+Pillow>=12.3.0
+pandas==2.3.3
+pyarrow==24.0.0
+ortools==9.15.6755
+libsql==0.1.11

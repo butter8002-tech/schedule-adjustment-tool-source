@@ -1,0 +1,24 @@
+# Ignore everything by default. Only the public-source allowlist below is tracked.
+*
+
+# Repository files
+!.gitignore
+!README.md
+!app.py
+!requirements.txt
+
+# Streamlit configuration
+!.streamlit/
+!.streamlit/config.toml
+
+# v2 user guide
+!docs/
+!docs/USAGE_GUIDE.md
+!docs/user_guide_assets/
+!docs/user_guide_assets/*.png
+
+# Application source
+!src/
+!src/**/
+!src/**/*.py
+!src/**/frontend/*.html

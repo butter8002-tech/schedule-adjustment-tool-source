@@ -1,0 +1,833 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      :root {
+        color-scheme: light;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        --primary: #175cd3;
+        --danger: #b42318;
+        --university-role: #175cd3;
+        --high-school-role: #222222;
+        --saturday-background: rgba(82, 180, 255, 0.16);
+        --saturday-foreground: #175cd3;
+        --holiday-background: rgba(255, 99, 132, 0.14);
+        --holiday-active-background: rgba(255, 110, 110, 0.16);
+        --holiday-foreground: #b42318;
+        --zoom-background: #dbeafe;
+        --zoom-foreground: #175cd3;
+        --zoom-border: #93c5fd;
+        --basic-text: #31333f;
+        --basic-border: rgba(128, 128, 128, 0.28);
+        --grid-border: rgba(49, 51, 63, 0.22);
+        --cell-border: rgba(49, 51, 63, 0.18);
+        --grid-bg: #ffffff;
+        --header-bg: rgba(49, 51, 63, 0.06);
+        --text-color: #31333f;
+        --muted-bg: rgba(49, 51, 63, 0.04);
+        --button-bg: #ffffff;
+        --date-column-width: 140px;
+        --projects-column-width: 150px;
+        --zoom-column-width: 80px;
+        --period-column-width: 105px;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        background: transparent;
+        color: var(--text-color);
+      }
+      .availability-grid {
+        width: min(100%, var(--grid-content-width, 1000px));
+        max-width: 100%;
+        border: 1px solid var(--grid-border);
+        border-radius: 6px;
+        overflow-x: auto;
+        background: var(--grid-bg);
+      }
+      table {
+        min-width: var(--grid-content-width, 1000px);
+        width: var(--grid-content-width, 1000px);
+        border-collapse: collapse;
+        table-layout: fixed;
+        font-size: 14px;
+      }
+      th,
+      td {
+        border: 1px solid var(--cell-border);
+        padding: 6px 8px;
+        text-align: center;
+        vertical-align: middle;
+      }
+      th {
+        background: var(--header-bg);
+        font-weight: 650;
+      }
+      th.date-column,
+      td.date-column {
+        width: var(--date-column-width);
+        text-align: left;
+        white-space: nowrap;
+      }
+      td.date-column.saturday {
+        background: var(--saturday-background);
+        color: var(--saturday-foreground);
+        font-weight: 650;
+      }
+      td.date-column.sunday,
+      td.date-column.holiday {
+        background: var(--holiday-background);
+        color: var(--holiday-foreground);
+        font-weight: 650;
+      }
+      td.date-column.active.saturday {
+        background: var(--saturday-background);
+        color: var(--saturday-foreground);
+        font-weight: 400;
+      }
+      td.date-column.active.sunday,
+      td.date-column.active.holiday {
+        background: var(--holiday-active-background);
+        color: var(--holiday-foreground);
+        font-weight: 400;
+      }
+      td.date-column.inactive,
+      .project-tag.inactive {
+        opacity: 0.45;
+      }
+      td.date-column.active {
+        opacity: 1;
+      }
+      tr.date-gap td {
+        height: 6px;
+        padding: 0;
+        background: #d0d5dd;
+        border: 0;
+      }
+      th.zoom-column,
+      td.zoom-column {
+        width: var(--zoom-column-width);
+      }
+      th.projects-column,
+      td.projects-column {
+        width: var(--projects-column-width);
+        text-align: left;
+      }
+      .date-label {
+        display: block;
+        white-space: nowrap;
+      }
+      .project-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 3px;
+        max-width: 100%;
+      }
+      .project-tag {
+        display: inline-block;
+        max-width: 100%;
+        padding: 1px 6px;
+        border-radius: 999px;
+        background: rgba(46, 204, 113, 0.14);
+        color: #16794a;
+        font-size: 12px;
+        font-weight: 650;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .project-tag.color-0 {
+        background: rgba(25, 118, 210, 0.12);
+        color: #0d47a1;
+      }
+      .project-tag.color-1 {
+        background: rgba(46, 125, 50, 0.12);
+        color: #1b5e20;
+      }
+      .project-tag.color-2 {
+        background: rgba(239, 108, 0, 0.14);
+        color: #a04000;
+      }
+      .project-tag.color-3 {
+        background: rgba(123, 31, 162, 0.12);
+        color: #4a148c;
+      }
+      .project-tag.color-4 {
+        background: rgba(0, 121, 107, 0.12);
+        color: #004d40;
+      }
+      .project-tag.color-5 {
+        background: rgba(198, 40, 40, 0.12);
+        color: #8e0000;
+      }
+      .project-tag.color-6 {
+        background: rgba(69, 90, 100, 0.13);
+        color: #263238;
+      }
+      .project-tag.color-7 {
+        background: rgba(194, 24, 91, 0.12);
+        color: #880e4f;
+      }
+      .project-tag.color-8 {
+        background: rgba(85, 139, 47, 0.13);
+        color: #33691e;
+      }
+      .project-tag.color-9 {
+        background: rgba(94, 53, 177, 0.12);
+        color: #311b92;
+      }
+      .project-tag.active {
+        border: 1px solid currentColor;
+        box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.7);
+      }
+      .project-tag.active.color-0 {
+        background: #dbeafe;
+        color: #1d4ed8;
+      }
+      .project-tag.active.color-1 {
+        background: #dcfce7;
+        color: #166534;
+      }
+      .project-tag.active.color-2 {
+        background: #ffedd5;
+        color: #9a3412;
+      }
+      .project-tag.active.color-3 {
+        background: #f3e8ff;
+        color: #6b21a8;
+      }
+      .project-tag.active.color-4 {
+        background: #ccfbf1;
+        color: #115e59;
+      }
+      .project-tag.active.color-5 {
+        background: #fee2e2;
+        color: #991b1b;
+      }
+      .project-tag.active.color-6 {
+        background: #e2e8f0;
+        color: #334155;
+      }
+      .project-tag.active.color-7 {
+        background: #fce7f3;
+        color: #9d174d;
+      }
+      .project-tag.active.color-8 {
+        background: #ecfccb;
+        color: #3f6212;
+      }
+      .project-tag.active.color-9 {
+        background: #ede9fe;
+        color: #5b21b6;
+      }
+      .zoom-toggle {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        user-select: none;
+        white-space: nowrap;
+      }
+      .slot-control {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 5px;
+        min-height: 30px;
+        width: 100%;
+        white-space: nowrap;
+      }
+      .slot-control input,
+      .zoom-toggle input {
+        margin: 0;
+      }
+      .mode-button {
+        border: 1px solid var(--grid-border);
+        border-radius: 999px;
+        background: var(--muted-bg);
+        color: var(--text-color);
+        cursor: pointer;
+        font: inherit;
+        font-size: 12px;
+        font-weight: 650;
+        line-height: 1.2;
+        padding: 2px 8px;
+      }
+      .mode-button.zoom {
+        border-color: rgba(25, 118, 210, 0.4);
+        background: rgba(25, 118, 210, 0.1);
+        color: #0d47a1;
+      }
+      .mode-button.in-person {
+        border-color: rgba(46, 125, 50, 0.4);
+        background: rgba(46, 125, 50, 0.1);
+        color: #1b5e20;
+      }
+      .mode-button:disabled,
+      .zoom-toggle.disabled {
+        cursor: not-allowed;
+        opacity: 0.55;
+      }
+      .actions {
+        display: flex;
+        gap: 10px;
+        justify-content: flex-start;
+        padding: 10px 0 0;
+      }
+      .action-button {
+        border: 1px solid var(--grid-border);
+        border-radius: 6px;
+        background: var(--button-bg);
+        color: var(--text-color);
+        cursor: pointer;
+        font: inherit;
+        font-weight: 650;
+        padding: 7px 14px;
+      }
+      .action-button.primary {
+        border-color: var(--primary);
+        background: var(--primary);
+        color: #ffffff;
+      }
+      .action-button:disabled {
+        cursor: not-allowed;
+        opacity: 0.55;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+      const STATE_UNAVAILABLE = "unavailable";
+      const STATE_IN_PERSON = "in_person";
+      const STATE_ZOOM = "zoom";
+      let args = {};
+      let slotStates = {};
+      let zoomDays = {};
+      let zoomInitializedDays = {};
+      let projectColorIndexes = {};
+
+      function sendMessage(type, data) {
+        window.parent.postMessage(
+          {
+            isStreamlitMessage: true,
+            type,
+            ...data,
+          },
+          "*",
+        );
+      }
+
+      function setComponentValue(value) {
+        sendMessage("streamlit:setComponentValue", {
+          value,
+          dataType: "json",
+        });
+      }
+
+      function setFrameHeight() {
+        const height = Math.max(
+          document.body.scrollHeight,
+          document.documentElement.scrollHeight,
+        );
+        sendMessage("streamlit:setFrameHeight", { height });
+      }
+
+      function setComponentReady() {
+        sendMessage("streamlit:componentReady", { apiVersion: 1 });
+      }
+
+      function applyTheme() {
+        document.documentElement.style.colorScheme = "light";
+      }
+
+      function slotKey(day, period) {
+        return `${day}#${period}`;
+      }
+
+      function escapeSelector(value) {
+        if (window.CSS && typeof window.CSS.escape === "function") {
+          return window.CSS.escape(value);
+        }
+        return String(value).replace(/["\\]/g, "\\$&");
+      }
+
+      function valueFromState() {
+        const availability = [];
+        const zoomAvailability = [];
+        const zoomDayValues = {};
+        const zoomInitializedValues = {};
+        for (const [key, state] of Object.entries(slotStates)) {
+          const dayIso = key.split("#")[0];
+          if (state === STATE_IN_PERSON || !zoomDays[dayIso]) {
+            if (state !== STATE_UNAVAILABLE) {
+              availability.push(key);
+            }
+          } else if (state === STATE_ZOOM) {
+            zoomAvailability.push(key);
+          }
+        }
+        for (const [day, enabled] of Object.entries(zoomDays)) {
+          zoomDayValues[day] = Boolean(enabled);
+        }
+        for (const [day, initialized] of Object.entries(zoomInitializedDays)) {
+          zoomInitializedValues[day] = Boolean(initialized);
+        }
+        availability.sort();
+        zoomAvailability.sort();
+        return {
+          availability,
+          zoom_availability: zoomAvailability,
+          zoom_days: zoomDayValues,
+          zoom_initialized_days: zoomInitializedValues,
+          server_state_id: args.server_state_id || "",
+          state_availability: valueForRenderState().availability,
+          state_zoom_availability: valueForRenderState().zoom_availability,
+        };
+      }
+
+      function valueForRenderState() {
+        const availability = [];
+        const zoomAvailability = [];
+        const zoomDayValues = {};
+        const zoomInitializedValues = {};
+        for (const [key, state] of Object.entries(slotStates)) {
+          if (state === STATE_IN_PERSON) {
+            availability.push(key);
+          } else if (state === STATE_ZOOM) {
+            zoomAvailability.push(key);
+          }
+        }
+        for (const [day, enabled] of Object.entries(zoomDays)) {
+          zoomDayValues[day] = Boolean(enabled);
+        }
+        for (const [day, initialized] of Object.entries(zoomInitializedDays)) {
+          zoomInitializedValues[day] = Boolean(initialized);
+        }
+        availability.sort();
+        zoomAvailability.sort();
+        return {
+          availability,
+          zoom_availability: zoomAvailability,
+          zoom_days: zoomDayValues,
+          zoom_initialized_days: zoomInitializedValues,
+        };
+      }
+
+      function localStateKey() {
+        return args.storage_key
+          ? `schedule-availability-grid:${args.storage_key}`
+          : "";
+      }
+
+      function readStoredValue() {
+        const key = localStateKey();
+        if (!key) {
+          return null;
+        }
+        try {
+          const value = window.localStorage.getItem(key);
+          return value ? JSON.parse(value) : null;
+        } catch (_error) {
+          return null;
+        }
+      }
+
+      function storedValueMatchesServer(storedValue) {
+        if (!storedValue || typeof storedValue !== "object") {
+          return false;
+        }
+        const serverStateId = args.server_state_id || "";
+        return Boolean(serverStateId) && storedValue.server_state_id === serverStateId;
+      }
+
+      function removeStoredValue() {
+        const key = localStateKey();
+        if (!key) {
+          return;
+        }
+        try {
+          window.localStorage.removeItem(key);
+        } catch (_error) {
+          return;
+        }
+      }
+
+      function persistValue() {
+        const key = localStateKey();
+        if (!key) {
+          return;
+        }
+        try {
+          window.localStorage.setItem(key, JSON.stringify(valueFromState()));
+        } catch (_error) {
+          return;
+        }
+      }
+
+      function emitValue(action) {
+        const storedValue = readStoredValue();
+        if (storedValueMatchesServer(storedValue)) {
+          initializeState({ ...args, ...storedValue });
+        } else if (storedValue) {
+          removeStoredValue();
+        }
+        setComponentValue({
+          ...valueFromState(),
+          action,
+          nonce: `${Date.now()}-${Math.random()}`,
+        });
+        window.setTimeout(setFrameHeight, 0);
+      }
+
+      function initializeState(nextArgs) {
+        args = nextArgs || {};
+        const rawStoredValue = readStoredValue();
+        const storedValue = storedValueMatchesServer(rawStoredValue)
+          ? rawStoredValue
+          : {};
+        if (rawStoredValue && !storedValueMatchesServer(rawStoredValue)) {
+          removeStoredValue();
+        }
+        const availability = new Set(
+          storedValue.state_availability ||
+            storedValue.availability ||
+            args.availability ||
+            [],
+        );
+        const zoomAvailability = new Set(
+          storedValue.state_zoom_availability ||
+            storedValue.zoom_availability ||
+            args.zoom_availability ||
+            [],
+        );
+        const zoomDayValues = storedValue.zoom_days || args.zoom_days || {};
+        const zoomInitializedValues =
+          storedValue.zoom_initialized_days ||
+          args.zoom_initialized_days ||
+          {};
+        slotStates = {};
+        zoomDays = {};
+        zoomInitializedDays = {};
+        for (const day of args.days || []) {
+          zoomDays[day.iso] = Boolean(zoomDayValues[day.iso]);
+          zoomInitializedDays[day.iso] = Boolean(
+            zoomInitializedValues[day.iso] || zoomDayValues[day.iso],
+          );
+          for (const period of args.periods || []) {
+            const key = slotKey(day.iso, period);
+            if (availability.has(key)) {
+              slotStates[key] = STATE_IN_PERSON;
+            } else if (zoomAvailability.has(key)) {
+              slotStates[key] = STATE_ZOOM;
+            } else {
+              slotStates[key] = STATE_UNAVAILABLE;
+            }
+          }
+        }
+        projectColorIndexes = {};
+        let nextColorIndex = 0;
+        for (const day of args.days || []) {
+          for (const title of day.project_titles || []) {
+            if (projectColorIndexes[title] === undefined) {
+              projectColorIndexes[title] = nextColorIndex % 10;
+              nextColorIndex += 1;
+            }
+          }
+        }
+      }
+
+      function setSlotChecked(dayIso, period, checked) {
+        if (args.disabled) {
+          return;
+        }
+        const key = slotKey(dayIso, period);
+        if (!checked) {
+          slotStates[key] = STATE_UNAVAILABLE;
+        } else if (zoomDays[dayIso]) {
+          slotStates[key] = STATE_ZOOM;
+        } else {
+          slotStates[key] = STATE_IN_PERSON;
+        }
+        updateSlotCell(dayIso, period);
+        persistValue();
+      }
+
+      function toggleSlotMode(dayIso, period) {
+        if (args.disabled || !zoomDays[dayIso]) {
+          return;
+        }
+        const key = slotKey(dayIso, period);
+        const current = slotStates[key] || STATE_UNAVAILABLE;
+        if (current === STATE_ZOOM) {
+          slotStates[key] = STATE_IN_PERSON;
+        } else if (current === STATE_IN_PERSON) {
+          slotStates[key] = STATE_ZOOM;
+        }
+        updateSlotCell(dayIso, period);
+        persistValue();
+      }
+
+      function toggleZoomDay(dayIso) {
+        if (args.disabled) {
+          return;
+        }
+        const nextZoom = !zoomDays[dayIso];
+        zoomDays[dayIso] = nextZoom;
+        if (nextZoom && !zoomInitializedDays[dayIso]) {
+          for (const period of args.periods || []) {
+            const key = slotKey(dayIso, period);
+            if (slotStates[key] !== STATE_UNAVAILABLE) {
+              slotStates[key] = STATE_ZOOM;
+            }
+          }
+          zoomInitializedDays[dayIso] = true;
+        }
+        updateZoomCell(dayIso);
+        for (const period of args.periods || []) {
+          updateSlotCell(dayIso, period);
+        }
+        persistValue();
+      }
+
+      function actionButtonConfigs() {
+        const configuredActions = args.action_buttons || [];
+        return configuredActions.length > 0
+          ? configuredActions
+          : [
+              { action: "draft", label: "下書き保存", primary: false },
+              { action: "submitted", label: "この内容で提出", primary: true },
+            ];
+      }
+
+      function createActions(disabled) {
+        const actions = document.createElement("div");
+        actions.className = "actions";
+        for (const buttonConfig of actionButtonConfigs()) {
+          const button = document.createElement("button");
+          button.type = "button";
+          button.className = `action-button${
+            buttonConfig.primary ? " primary" : ""
+          }`;
+          button.textContent = buttonConfig.label;
+          button.disabled = disabled;
+          button.addEventListener("click", () => emitValue(buttonConfig.action));
+          actions.appendChild(button);
+        }
+        return actions;
+      }
+
+      function createZoomToggle(dayIso, disabled) {
+        const zoomLabel = document.createElement("label");
+        zoomLabel.className = `zoom-toggle${disabled ? " disabled" : ""}`;
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.checked = Boolean(zoomDays[dayIso]);
+        checkbox.disabled = disabled;
+        checkbox.addEventListener("change", () => toggleZoomDay(dayIso));
+        zoomLabel.appendChild(checkbox);
+        return zoomLabel;
+      }
+
+      function createSlotControl(dayIso, period, disabled) {
+        const key = slotKey(dayIso, period);
+        const state = slotStates[key] || STATE_UNAVAILABLE;
+        const control = document.createElement("label");
+        control.className = "slot-control";
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.checked = state !== STATE_UNAVAILABLE;
+        checkbox.disabled = disabled;
+        checkbox.addEventListener("change", (event) =>
+          setSlotChecked(dayIso, period, event.target.checked),
+        );
+        control.appendChild(checkbox);
+        if (zoomDays[dayIso] && state !== STATE_UNAVAILABLE) {
+          const modeButton = document.createElement("button");
+          modeButton.type = "button";
+          modeButton.disabled = disabled;
+          modeButton.className = `mode-button ${
+            state === STATE_ZOOM ? "zoom" : "in-person"
+          }`;
+          modeButton.textContent = state === STATE_ZOOM ? "Zoom" : "対面";
+          modeButton.title = "クリックで Zoom / 対面 を切り替え";
+          modeButton.addEventListener("click", (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            toggleSlotMode(dayIso, period);
+          });
+          control.appendChild(modeButton);
+        }
+        return control;
+      }
+
+      function updateZoomCell(dayIso) {
+        const disabled = Boolean(args.disabled);
+        const cell = document.querySelector(
+          `[data-zoom-day="${escapeSelector(dayIso)}"]`,
+        );
+        if (cell) {
+          cell.replaceChildren(createZoomToggle(dayIso, disabled));
+        }
+      }
+
+      function updateSlotCell(dayIso, period) {
+        const disabled = Boolean(args.disabled);
+        const key = slotKey(dayIso, period);
+        const cell = document.querySelector(
+          `[data-slot-key="${escapeSelector(key)}"]`,
+        );
+        if (cell) {
+          cell.replaceChildren(createSlotControl(dayIso, period, disabled));
+        }
+      }
+
+      function render() {
+        const root = document.getElementById("root");
+        const disabled = Boolean(args.disabled);
+        if (args.render_mode === "actions") {
+          root.replaceChildren(createActions(disabled));
+          window.setTimeout(setFrameHeight, 0);
+          return;
+        }
+        const days = args.days || [];
+        const periods = args.periods || [];
+        const hasProjects = days.some(
+          (day) => (day.project_titles || []).length > 0,
+        );
+        const dateColumnWidth = 140;
+        const projectsColumnWidth = 150;
+        const zoomColumnWidth = 80;
+        const periodColumnWidth = 105;
+        const contentWidth =
+          dateColumnWidth +
+          (hasProjects ? projectsColumnWidth : 0) +
+          zoomColumnWidth +
+          periods.length * periodColumnWidth;
+        const table = document.createElement("table");
+        const thead = document.createElement("thead");
+        const headRow = document.createElement("tr");
+
+        const dateHead = document.createElement("th");
+        dateHead.className = "date-column";
+        dateHead.textContent = "日付";
+        headRow.appendChild(dateHead);
+
+        if (hasProjects) {
+          const projectsHead = document.createElement("th");
+          projectsHead.className = "projects-column";
+          projectsHead.textContent = "対象企画";
+          headRow.appendChild(projectsHead);
+        }
+
+        const zoomHead = document.createElement("th");
+        zoomHead.className = "zoom-column";
+        zoomHead.textContent = "Zoomなら可";
+        headRow.appendChild(zoomHead);
+
+        for (const period of periods) {
+          const th = document.createElement("th");
+          th.textContent = `${period}限`;
+          headRow.appendChild(th);
+        }
+        thead.appendChild(headRow);
+        table.appendChild(thead);
+
+        const tbody = document.createElement("tbody");
+        for (const day of days) {
+          if (day.gap) {
+            const separatorRow = document.createElement("tr");
+            separatorRow.className = "date-gap";
+            const separatorCell = document.createElement("td");
+            separatorCell.colSpan =
+              1 + (hasProjects ? 1 : 0) + 1 + periods.length;
+            separatorCell.setAttribute("aria-hidden", "true");
+            separatorRow.appendChild(separatorCell);
+            tbody.appendChild(separatorRow);
+          }
+          const row = document.createElement("tr");
+
+          const dateCell = document.createElement("td");
+          dateCell.className =
+            "date-column " +
+            (day.day_type || "") +
+            (day.active === false ? " inactive" : " active");
+          const dateLabel = document.createElement("span");
+          dateLabel.className = "date-label";
+          dateLabel.textContent = day.label;
+          dateCell.appendChild(dateLabel);
+          row.appendChild(dateCell);
+
+          if (hasProjects) {
+            const projectsCell = document.createElement("td");
+            projectsCell.className = "projects-column";
+            const projectTitles = day.project_titles || [];
+            if (projectTitles.length > 0) {
+              const tags = document.createElement("div");
+              tags.className = "project-tags";
+              for (const title of projectTitles) {
+                const tag = document.createElement("span");
+                const colorIndex = projectColorIndexes[title] ?? 0;
+                const activeTitles = day.active_project_titles;
+                const hasActiveTitleMap = Array.isArray(activeTitles);
+                const active =
+                  hasActiveTitleMap && activeTitles.includes(title);
+                const inactive = hasActiveTitleMap && !active;
+                tag.className =
+                  "project-tag color-" +
+                  colorIndex +
+                  (active ? " active" : "") +
+                  (inactive ? " inactive" : "");
+                tag.textContent = title;
+                tag.title = title;
+                tags.appendChild(tag);
+              }
+              projectsCell.appendChild(tags);
+            }
+            row.appendChild(projectsCell);
+          }
+
+          const zoomCell = document.createElement("td");
+          zoomCell.className = "zoom-column";
+          zoomCell.dataset.zoomDay = day.iso;
+          zoomCell.appendChild(createZoomToggle(day.iso, disabled));
+          row.appendChild(zoomCell);
+
+          for (const period of periods) {
+            const key = slotKey(day.iso, period);
+            const cell = document.createElement("td");
+            cell.dataset.slotKey = key;
+            cell.appendChild(createSlotControl(day.iso, period, disabled));
+            row.appendChild(cell);
+          }
+          tbody.appendChild(row);
+        }
+        table.appendChild(tbody);
+
+        const wrap = document.createElement("div");
+        wrap.className = "availability-grid";
+        wrap.style.setProperty("--grid-content-width", `${contentWidth}px`);
+        wrap.appendChild(table);
+
+        if (args.show_actions) {
+          root.replaceChildren(wrap, createActions(disabled));
+        } else {
+          root.replaceChildren(wrap);
+        }
+        window.setTimeout(setFrameHeight, 0);
+      }
+
+      window.addEventListener("message", (event) => {
+        if (!event.data || event.data.type !== "streamlit:render") {
+          return;
+        }
+        applyTheme();
+        initializeState(event.data.args || {});
+        render();
+      });
+
+      setComponentReady();
+    </script>
+  </body>
+</html>
